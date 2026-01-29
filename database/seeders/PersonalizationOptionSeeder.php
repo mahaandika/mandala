@@ -12,11 +12,11 @@ class PersonalizationOptionSeeder extends Seeder
     {
         $types = PersonalizationType::all()->keyBy('name');
 
-        // Spiciness
-        foreach (range(0, 5) as $level) {
+        // Spiciness Level
+        foreach (['No Spicy', 'Less Spicy', 'Medium Spicy', 'Spicy', 'Extra Spicy'] as $level) {
             PersonalizationOption::firstOrCreate([
                 'personalization_type_id' => $types['Spiciness Level']->id,
-                'name' => (string) $level,
+                'name' => $level,
             ], ['is_active' => true]);
         }
 
