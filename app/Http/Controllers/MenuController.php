@@ -139,21 +139,20 @@ class MenuController extends Controller
                     if (!$type || empty($optionIds)) continue;
 
                     if ($type->selection_mode === 'include') {
-                        foreach ($optionIds as $optionId) {
-                            $query->whereHas('personalizationOptions', fn ($q) =>
-                                $q->where('personalization_option_id', $optionId)
-                            );
-                        }
+                        // LOGIKA OR: Menampilkan menu yang punya salah satu dari optionIds
+                        $query->whereHas('personalizationOptions', function ($q) use ($optionIds) {
+                            $q->whereIn('personalization_option_id', $optionIds);
+                        });
                     }
 
                     if ($type->selection_mode === 'exclude') {
-                        $query->whereDoesntHave('personalizationOptions', fn ($q) =>
-                            $q->whereIn('personalization_option_id', $optionIds)
-                        );
+                        // Tetap gunakan exclude jika ingin menyembunyikan menu yang mengandung bahan terlarang
+                        $query->whereDoesntHave('personalizationOptions', function ($q) use ($optionIds) {
+                            $q->whereIn('personalization_option_id', $optionIds);
+                        });
                     }
                 }
-
-            }   
+            }
 
             $menus = $query
                 ->orderBy('name')
@@ -163,9 +162,12 @@ class MenuController extends Controller
             return Inertia::render('menus', [
                 'menus' => $menus,
                 'categories' => Category::where('is_active', true)->orderBy('name')->get(),
-                'personalizations' => PersonalizationType::with('personalizationOptions')
-                    ->where('is_active', true)
-                    ->get(),
+                'personalizations' => PersonalizationType::with(['personalizationOptions' => function ($query) {
+                    // Filter agar hanya mengambil option yang aktif saja
+                    $query->where('is_active', true);
+                }])
+                ->where('is_active', true) // Filter agar hanya mengambil type yang aktif saja
+                ->get(),
                 'filters' => [
                     'search' => $request->search,
                     'category' => $request->category,
