@@ -31,12 +31,12 @@ class MenusRequest extends FormRequest
 
         if ($this->isMethod('post')) {
             // CREATE
-            $rules['image'] = ['required', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'];
+            $rules['image'] = ['required', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:5048'];
         }
 
         if ($this->isMethod('put') || $this->isMethod('patch')) {
             // UPDATE
-            $rules['image'] = ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'];
+            $rules['image'] = ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:5048'];
         }
 
         return $rules;
