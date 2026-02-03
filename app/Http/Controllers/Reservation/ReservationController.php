@@ -247,11 +247,11 @@ class ReservationController extends Controller
     }
 
     // --- CEK APAKAH TERLALU CEPAT ---
-    // if ($now->lt($reservationStartTime->subMinutes(5))) {
-    //     return back()->withErrors([
-    //         'message' => 'Gagal: Belum waktunya Check-in. Reservasi dijadwalkan pada jam ' . $reservationStartTime->format('H:i')
-    //     ]);
-    // }
+    if ($now->lt($reservationStartTime->subMinutes(5))) {
+        return back()->withErrors([
+            'message' => 'Gagal: Belum waktunya Check-in. Reservasi dijadwalkan pada jam ' . $reservationStartTime->format('H:i')
+        ]);
+    }
 
     // 3. Update data jika validasi lolos (Tepat Waktu)
     $booking->update([
