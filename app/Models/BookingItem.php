@@ -12,6 +12,7 @@ class BookingItem extends Model
         'quantity',
         'unit_price',
         'subtotal',
+        'type',
     ];
 
     // helper
