@@ -53,6 +53,7 @@ class ItemMenusController extends Controller
                 'quantity'   => 1,
                 'unit_price' => $menu->price,
                 'subtotal'   => $menu->price,
+                'type'       => 'online',
             ]);
         }
 
