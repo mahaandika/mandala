@@ -1,9 +1,64 @@
 import FooterClient from '@/components/footer-Client';
 import HeroSlider from '@/components/hero-slider';
 import NavbarClient from '@/components/navbar-client';
-import { Link } from '@inertiajs/react';
+import PersonalizationModal from '@/components/PersonalizationModal'; // Import komponen baru
+import { Link, router, usePage } from '@inertiajs/react';
+import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 export default function Welcome() {
+    const { must_personalize, personalization_list } = usePage<any>().props;
+
+    const [showModal, setShowModal] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (must_personalize) {
+            setShowModal(true);
+        }
+    }, [must_personalize]);
+
+    /**
+     * Logika Toggle Opsi
+     * Menangani aturan Single Selection vs Multiple Selection
+     */
+    const handleToggle = (type: any, optionId: number) => {
+        const optionIdsInThisType = type.personalization_options.map(
+            (o: any) => o.id,
+        );
+
+        setSelectedIds((prev) => {
+            if (type.selection_type === 'single') {
+                // Hapus semua ID yang termasuk dalam kategori ini, lalu masukkan yang baru
+                const filtered = prev.filter(
+                    (id) => !optionIdsInThisType.includes(id),
+                );
+                return [...filtered, optionId];
+            } else {
+                // Logika Multiple: Toggle biasa
+                return prev.includes(optionId)
+                    ? prev.filter((id) => id !== optionId)
+                    : [...prev, optionId];
+            }
+        });
+    };
+
+    const handleSave = async () => {
+        if (selectedIds.length === 0) return;
+        setLoading(true);
+        try {
+            await axios.post('/personalization/save', {
+                option_ids: selectedIds,
+            });
+            setShowModal(false);
+            router.visit('/menus');
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
     return (
         <div>
             <NavbarClient />
@@ -148,6 +203,17 @@ export default function Welcome() {
             </section>
 
             <FooterClient />
+
+            {/* --- MEMANGGIL KOMPONEN MODAL --- */}
+            <PersonalizationModal
+                show={showModal}
+                loading={loading}
+                data={personalization_list}
+                selectedIds={selectedIds}
+                onToggle={handleToggle}
+                onSave={handleSave}
+                // onClose={() => setShowModal(false)} // Opsional jika boleh ditutup
+            />
         </div>
     );
 }
