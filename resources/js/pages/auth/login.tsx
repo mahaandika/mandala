@@ -9,7 +9,7 @@ import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 
 interface LoginProps {
     status?: string;
@@ -22,12 +22,31 @@ export default function Login({
     canResetPassword,
     canRegister,
 }: LoginProps) {
+    const { errors } = usePage().props;
     return (
         <AuthLayout
             title="Log in to your account"
             description="Enter your email and password below to log in"
         >
             <Head title="Log in" />
+            {status && (
+                <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-center text-sm font-medium text-green-600">
+                    {status}
+                </div>
+            )}
+            {errors.requires_verification && (
+                <div className="mt-4 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-center">
+                    <p className="mb-2 text-sm text-yellow-700">
+                        Akun Anda belum aktif.
+                    </p>
+                    <Link
+                        href={`/email/verify-notice/${errors.verification_id}/${errors.verification_hash}`}
+                        className="text-sm font-bold text-yellow-800 underline"
+                    >
+                        Verifikasi Sekarang
+                    </Link>
+                </div>
+            )}
 
             <Form
                 {...store.form()}
