@@ -10,7 +10,7 @@ use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+public function index(Request $request)
     {
         $date = $request->get('date', Carbon::today()->toDateString());
 
@@ -22,24 +22,35 @@ class DashboardController extends Controller
                 'user:id,name,phone',
                 'tables:id,table_name,capacity',
             ])
+            // 1. Hitung jumlah item yang tipenya 'walk_in'
+            ->withCount(['items as walk_in_items_count' => function ($query) {
+                $query->where('type', 'walk_in');
+            }])
             ->whereDate('booking_date', $date)
             ->whereIn('booking_status', ['reserve', 'seated'])
-            // Urutkan dari database agar lebih rapi sejak awal
-            ->orderBy('booking_time', 'asc') 
+            ->orderBy('booking_time', 'asc')
             ->get();
 
         $tableBookings = [];
 
         foreach ($bookings as $booking) {
+            // 2. Logika: Hitung hanya jika statusnya 'seated'
+            $walkInCount = 0;
+            if ($booking->booking_status === 'seated') {
+                $walkInCount = $booking->walk_in_items_count;
+            }
+
             foreach ($booking->tables as $table) {
                 $tableBookings[$table->id][] = [
                     'id' => $booking->id,
-                    'customer' => $booking->user->name,
-                    'phone' => $booking->user->phone,
+                    'customer' => $booking->user->name ?? 'Guest', // Handle jika user null (walk-in no user)
+                    'phone' => $booking->user->phone ?? '-',
                     'status' => $booking->booking_status,
                     'date' => $booking->booking_date,
                     'time' => $booking->booking_time,
                     'pax' => $booking->total_people,
+                    // 3. Masukkan data count ke array
+                    'walk_in_items' => $walkInCount, 
                 ];
             }
         }
@@ -55,10 +66,9 @@ class DashboardController extends Controller
                 $reservationsForThisTable = $tableBookings[$table->id] ?? [];
 
                 // --- PROSES PENGURUTAN BERDASARKAN WAKTU ---
-                // Kita urutkan array reservasi menggunakan collect() agar lebih mudah
                 $sortedReservations = collect($reservationsForThisTable)
-                    ->sortBy('time') // Mengurutkan berdasarkan key 'time' (asc)
-                    ->values()       // Mereset index array menjadi 0, 1, 2...
+                    ->sortBy('time')
+                    ->values()
                     ->all();
 
                 return [
@@ -74,13 +84,13 @@ class DashboardController extends Controller
                             'customer' => $res['customer'],
                             'phone' => $res['phone'],
                             'status' => $res['status'],
-                            'time' => $res['time'], 
+                            'time' => $res['time'],
+                            // 4. Sertakan di respon akhir
+                            'walk_in_items' => $res['walk_in_items'], 
                         ];
                     }, $sortedReservations),
                 ];
             });
-
-        // Kirim $tables ke Inertia atau view Anda
         return Inertia::render('admin/dashboard', [
             'tables' => $tables,
             'date' => $date
