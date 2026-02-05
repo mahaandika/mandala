@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->decimal('unit_price', 10, 2);
             $table->decimal('subtotal', 10, 2);
+            $table->enum('type', ['online', 'walk_in']);
 
             $table->timestamps();
         });
