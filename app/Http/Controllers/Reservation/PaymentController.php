@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Reservation;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\WalkInPayment;
 use App\Services\MidtransServices;
 use BaconQrCode\Renderer\Image\PngRenderer;
 use BaconQrCode\Renderer\Image\RendererStyle\RendererStyle;
@@ -207,5 +208,35 @@ class PaymentController extends Controller
         return Inertia::render('payment-finish', [
             'booking' => $booking
         ]);
+    }
+
+    public function processPayment(Request $request, Booking $booking)
+    {
+        $request->validate([
+            'payment_method' => 'required|in:cash,qris,debit,visa',
+            'total_amount' => 'required|numeric',
+            'amount_tendered' => 'nullable|numeric|gte:total_amount',
+        ]);
+
+        DB::transaction(function () use ($request, $booking) {
+            $change = 0;
+            if ($request->payment_method === 'cash') {
+                $change = $request->amount_tendered - $request->total_amount;
+            }
+
+            WalkInPayment::create([
+                'booking_id' => $booking->id,
+                'payment_method' => $request->payment_method,
+                'total_amount' => $request->total_amount,
+                'amount_tendered' => $request->amount_tendered,
+                'change_amount' => $change,
+            ]);
+
+            $booking->update([
+                'booking_status' => 'completed',
+            ]);
+        });
+
+        return back()->with('success', 'Pembayaran berhasil. Booking diselesaikan.');
     }
 }
