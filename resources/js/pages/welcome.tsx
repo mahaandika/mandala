@@ -8,7 +8,6 @@ import { useEffect, useState } from 'react';
 
 export default function Welcome() {
     const { must_personalize, personalization_list } = usePage<any>().props;
-
     const [showModal, setShowModal] = useState(false);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
