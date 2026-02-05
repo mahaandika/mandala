@@ -6,11 +6,13 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\PersonalFilterController;
 use App\Http\Controllers\PersonalisationController;
+use App\Http\Controllers\PersonalizationUserController;
 use App\Http\Controllers\PersonalMenuController;
 use App\Http\Controllers\PersonalOptionController;
 use App\Http\Controllers\PersonalTypeController;
 use App\Http\Controllers\Reservation\CartsController;
 use App\Http\Controllers\Reservation\HistoryController;
+use App\Http\Controllers\Reservation\InvoiceController;
 use App\Http\Controllers\Reservation\ItemMenusController;
 use App\Http\Controllers\Reservation\PaymentController;
 use App\Http\Controllers\Reservation\ReservationController;
@@ -19,27 +21,25 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
-Route::get('/', function () {
-    return Inertia::render('welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
-})->name('home');
+Route::middleware(['checkPersonalization'])->group(function () {
+    Route::get('/', function () {
+        return Inertia::render('welcome', [
+            'canRegister' => Features::enabled(Features::registration()),
+        ]);
+    })->name('home');
+    
+    Route::get('/about', function () {
+        return Inertia::render('aboutUs', []);
+    })->name('about-us');
+    
+    Route::get('/menus', [MenuController::class, 'menuClient'])->name('menus'); 
+       
+    
+    Route::get('/reservations', [ReservationController::class, 'indexReservation'])
+        ->name('reservations');
+});
 
-Route::get('/about', function () {
-    return Inertia::render('aboutUs', []);
-})->name('about-us');
-
-Route::get('/menus', [MenuController::class, 'menuClient'])->name('menus'); 
-   
-
-Route::get('/reservations', [ReservationController::class, 'indexReservation'])
-    ->name('reservations');
-
-
-
-
-
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified', ])->group(function () {
     Route::post('/bookings', [ReservationController::class, 'storeReservation'])
             ->name('bookings.store');
     Route::get('/carts', [CartsController::class, 'showCart'])->name('carts');
@@ -51,6 +51,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/payment/checkout', [PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::get('/payment-finish/{booking}', [PaymentController::class, 'paymentFinish'])->name('payment-finish');
     Route::get('/historys', [HistoryController::class, 'index'])->name('historys');
+
+    Route::post('/personalization/save', [PersonalizationUserController::class, 'savePersonalization']);
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'isReceptionis'])->group(function () {
@@ -64,8 +66,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'isRecep
     Route::post('/walk-in', [ReservationController::class, 'walkInReservation'])->name('walk-in');
     Route::post('/bookings/{booking}/add-items', [ReservationController::class, 'addItems'])
         ->name('bookings.add-items');
-
-
+    Route::post('/bookings/{booking}/pay', [PaymentController::class, 'processPayment'])->name('bookings.pay');
+    Route::get('/bookings/{booking}/invoice', [InvoiceController::class, 'downloadInvoice'])
+    ->name('bookings.invoice');
     Route::middleware('admin')->group(function () {
             Route::get('categories', [CategoriesController::class, 'indexCategory'])->name('categories.index');
             Route::get('categories/create', [CategoriesController::class, 'create'])->name('categories.create');
