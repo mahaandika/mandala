@@ -8,6 +8,7 @@ use App\Models\Menu;
 use App\Models\PersonalizationOption;
 use App\Models\PersonalizationType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -119,62 +120,69 @@ class MenuController extends Controller
 
     public function menuClient(Request $request)
     {
-            $query = Menu::query()
-                ->where('is_active', true);
+        // --- 1. QUERY UNTUK ALL MENUS (Pagination) ---
+        $allQuery = Menu::query()->where('is_active', true);
 
-            // SEARCH
-            if ($request->filled('search')) {
-                $query->where('name', 'like', '%' . $request->search . '%');
-            }
+        if ($request->filled('search')) {
+            $allQuery->where('name', 'like', '%' . $request->search . '%');
+        }
 
-            // CATEGORY
-            if ($request->filled('category')) {
-                $query->where('category_id', $request->category);
-            }
+        if ($request->filled('category')) {
+            $allQuery->where('category_id', $request->category);
+        }
 
-            // PERSONALIZATION
-            if ($request->filled('personalizations')) {
-                foreach ($request->personalizations as $slug => $optionIds) {
-                    $type = PersonalizationType::where('slug', $slug)->first();
-                    if (!$type || empty($optionIds)) continue;
+        // --- 2. QUERY UNTUK YOUR PREFERENCES (Berdasarkan DB User) ---
+        $prefMenus = collect();
+        $userPersonalizations = collect();
+        if (Auth::check()) {
+            $user = Auth::user();
+            $prefQuery = Menu::query()->where('is_active', true);
+            $userPersonalizations = $user->personalizations()->get();
+            $selectedOptionIds = $userPersonalizations->pluck('id')->toArray();
+            // Ambil preferensi user dari DB, kelompokkan berdasarkan tipe (untuk logika include/exclude)
+            $userOptions = PersonalizationOption::with('personalizationType')
+                ->whereHas('users', fn($q) => $q->where('user_id', $user->id))
+                ->get()
+                ->groupBy('personalization_type_id');
+
+            if ($userOptions->isNotEmpty()) {
+                foreach ($userOptions as $options) {
+                    $type = $options->first()->personalizationType;
+                    $optionIds = $options->pluck('id')->toArray();
 
                     if ($type->selection_mode === 'include') {
-                        // LOGIKA OR: Menampilkan menu yang punya salah satu dari optionIds
-                        $query->whereHas('personalizationOptions', function ($q) use ($optionIds) {
+                        $prefQuery->whereHas('personalizationOptions', function ($q) use ($optionIds) {
                             $q->whereIn('personalization_option_id', $optionIds);
                         });
-                    }
-
-                    if ($type->selection_mode === 'exclude') {
-                        // Tetap gunakan exclude jika ingin menyembunyikan menu yang mengandung bahan terlarang
-                        $query->whereDoesntHave('personalizationOptions', function ($q) use ($optionIds) {
+                    } else {
+                        $prefQuery->whereDoesntHave('personalizationOptions', function ($q) use ($optionIds) {
                             $q->whereIn('personalization_option_id', $optionIds);
                         });
                     }
                 }
+
+                // Tetap filter search dan kategori pada "Your Preferences" agar sinkron
+                if ($request->filled('search')) {
+                    $prefQuery->where('name', 'like', '%' . $request->search . '%');
+                }
+                if ($request->filled('category')) {
+                    $prefQuery->where('category_id', $request->category);
+                }
+
+                $prefMenus = $prefQuery->orderBy('name')->get();
             }
-
-            $menus = $query
-                ->orderBy('name')
-                ->paginate(6)
-                ->withQueryString();
-
-            return Inertia::render('menus', [
-                'menus' => $menus,
-                'categories' => Category::where('is_active', true)->orderBy('name')->get(),
-                'personalizations' => PersonalizationType::with(['personalizationOptions' => function ($query) {
-                    // Filter agar hanya mengambil option yang aktif saja
-                    $query->where('is_active', true);
-                }])
-                ->where('is_active', true) // Filter agar hanya mengambil type yang aktif saja
-                ->get(),
-                'filters' => [
-                    'search' => $request->search,
-                    'category' => $request->category,
-                    'personalizations' => $request->personalizations,
-                ],
-            ]);
         }
+
+        return Inertia::render('menus', [
+            'menus' => $allQuery->orderBy('name')->paginate(6)->withQueryString(),
+            'personalized_menus' => $prefMenus, // Data hasil filter DB
+            'user_selected_ids' => $userPersonalizations->pluck('id'),
+            'categories' => Category::where('is_active', true)->orderBy('name')->get(),
+            'personalizations' => PersonalizationType::with(['personalizationOptions' => fn($q) => $q->where('is_active', true)])
+                ->where('is_active', true)->get(),
+            'filters' => $request->only(['search', 'category']),
+        ]);
+    }
 
 
     public function getMenus(Request $request)
