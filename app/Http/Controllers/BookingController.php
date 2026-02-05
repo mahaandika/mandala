@@ -38,7 +38,8 @@ class BookingController extends Controller
                 'qty' => $item->quantity,
                 'price' => $item->formatted_price,
                 'subtotal' => $item->formatted_subtotal,
-            ]),
+                'type' => $item->type,
+                ]),
 
             'total_price' => $booking->items->sum(fn ($i) => $i->subtotal),
 
@@ -83,8 +84,4 @@ class BookingController extends Controller
                 "No show recorded for table: {$tableNames}"
             );
     }
-
-
-
-
 }
