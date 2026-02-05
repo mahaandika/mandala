@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class PersonalizationOption extends Model
 {
@@ -23,5 +24,10 @@ class PersonalizationOption extends Model
             Menu::class,
             'personalization_menus'
         )->withTimestamps();
+    }
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'user_personalizations');
     }
 }
