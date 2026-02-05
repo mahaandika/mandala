@@ -333,6 +333,7 @@ class ReservationController extends Controller
                     'quantity' => $data['quantity'],
                     'unit_price' => $data['unit_price'],
                     'subtotal' => $data['subtotal'],
+                    'type' => 'walk_in',
                 ]);
             }
 
@@ -367,6 +368,7 @@ class ReservationController extends Controller
                     // Kita gunakan relasi items() yang ada di model Booking
                     $existingItem = $booking->items()
                         ->where('menu_id', $menuMaster->id)
+                        ->where('type', 'walk_in')
                         ->first();
 
                     if ($existingItem) {
@@ -391,6 +393,7 @@ class ReservationController extends Controller
                             'quantity' => $qtyToAdd,
                             'unit_price' => $menuMaster->price, // Simpan harga saat ini
                             'subtotal' => $menuMaster->price * $qtyToAdd,
+                            'type' => 'walk_in',
                         ]);
                     }
                 }
@@ -413,5 +416,4 @@ class ReservationController extends Controller
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
-
 }
