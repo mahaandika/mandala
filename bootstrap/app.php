@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckMenuPersonalization;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IsAdmin;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => IsAdmin::class,
             'isReceptionis' => isReceptionis::class,
+            'checkPersonalization' => CheckMenuPersonalization::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             '/midtrans/callback',
