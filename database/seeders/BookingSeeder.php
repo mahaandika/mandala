@@ -119,6 +119,7 @@ class BookingSeeder extends Seeder
                         'quantity' => $qty,
                         'unit_price' => $menu->price,
                         'subtotal' => $subtotal,
+                        'type' => 'online',
                     ]);
 
                     $total += $subtotal;
