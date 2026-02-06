@@ -184,8 +184,8 @@
 {{-- HEADER --}}
 <div class="header">
     <h1>Mandala Restaurant</h1>
-    <p>Jalan Raya Contoh No.123, Bali</p>
-    <p>Phone: (0361) 123-4567</p>
+    <p>Jalan Pratama. 55X, Jalan Nusa Dua Tanjung Benoa, Kabupaten Badung, Bali</p>
+    <p>Phone: 0813-2550-5561</p>
 </div>
 
 {{-- BOOKING INFO --}}
