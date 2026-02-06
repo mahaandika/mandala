@@ -8,7 +8,7 @@ interface Props {
     actionUrl: string;
     confirmColor?: string;
     onClose: () => void;
-    onSuccess?: () => void; 
+    onSuccess?: () => void;
 }
 
 export default function ConfirmActionModal({
@@ -25,14 +25,14 @@ export default function ConfirmActionModal({
     const submit = () => {
         post(actionUrl, {
             onSuccess: () => {
-                onClose();        // tutup confirm modal
-                onSuccess?.();    // 🔥 tutup modal parent
+                onClose(); // tutup confirm modal
+                onSuccess?.(); // 🔥 tutup modal parent
             },
         });
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-999 flex items-center justify-center bg-black/40">
             <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
                 <h3 className="mb-2 text-lg font-semibold">{title}</h3>
                 <p className="mb-4 text-sm text-gray-600">{description}</p>
