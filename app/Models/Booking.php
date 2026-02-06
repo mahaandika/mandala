@@ -59,4 +59,8 @@ class Booking extends Model
     {
         return $this->hasMany(BookingItem::class);
     }
+    public function walkInPayments()
+    {
+        return $this->hasOne(WalkInPayment::class);
+    }
 }
