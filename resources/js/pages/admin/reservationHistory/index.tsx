@@ -9,8 +9,10 @@ import {
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { BookingDetail } from '@/types/booking-detail';
 import { Booking } from '@/types/booking-history';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Printer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -32,7 +34,11 @@ type PageProps = {
     };
 };
 
-export default function Index() {
+interface Props {
+    booking: BookingDetail;
+}
+
+export default function Index({ booking }: Props) {
     const { bookings, filters } = usePage<PageProps>().props;
 
     const [fromDate, setFromDate] = useState(filters?.from_date ?? '');
@@ -149,6 +155,10 @@ export default function Index() {
         }
 
         return null;
+    };
+
+    const handlePrint = (id: number) => {
+        window.open(`/admin/bookings/${id}/invoice`, '_blank');
     };
 
     return (
@@ -268,6 +278,9 @@ export default function Index() {
                                     <TableHead className="w-[120px]">
                                         Payment
                                     </TableHead>
+                                    <TableHead className="w-[140px] text-center">
+                                        Action
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
 
@@ -329,6 +342,20 @@ export default function Index() {
                                         </TableCell>
                                         <TableCell>
                                             {mapPaymentStatus(b.payment_status)}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <button
+                                                type="button" // Pastikan type button agar tidak trigger submit jika ada form
+                                                onClick={() =>
+                                                    handlePrint(b.id)
+                                                } // <--- Kirim b.id di sini
+                                                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus:ring-2 focus:ring-slate-400 focus:outline-none disabled:opacity-50"
+                                            >
+                                                <Printer size={16} />
+                                                <span className="whitespace-nowrap">
+                                                    Cetak Invoice
+                                                </span>
+                                            </button>
                                         </TableCell>
                                     </TableRow>
                                 ))}
