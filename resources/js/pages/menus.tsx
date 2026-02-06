@@ -1,6 +1,8 @@
 import NavbarClient from '@/components/navbar-client';
+import PersonalizationModal from '@/components/PersonalizationModal';
 import { login } from '@/routes';
 import { Link, router, usePage } from '@inertiajs/react';
+import axios from 'axios';
 import {
     AlertCircle,
     CheckCircle2,
@@ -9,7 +11,7 @@ import {
     Settings2,
     X,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /* =====================================================
 | TYPES
@@ -53,12 +55,13 @@ type PersonalizationType = {
 
 type PageProps = {
     menus: Pagination<Menu>;
+    personalized_menus: Menu[];
+    user_selected_ids: number[]; // ID yang sudah dipilih user di DB
     categories: Category[];
     personalizations: PersonalizationType[];
     filters: {
         search?: string;
         category?: string | number;
-        personalizations?: Record<string, any>;
     };
     auth: {
         user?: any;
@@ -66,21 +69,28 @@ type PageProps = {
 };
 
 export default function Menus() {
-    const { menus, categories, personalizations, filters, auth } =
-        usePage<PageProps>().props;
+    const {
+        menus,
+        personalized_menus,
+        user_selected_ids,
+        categories,
+        personalizations,
+        filters,
+        auth,
+    } = usePage<PageProps>().props;
 
     /* ================= STATE ================= */
     const [search, setSearch] = useState(filters.search ?? '');
     const [activeCategory, setActiveCategory] = useState<number | null>(
         filters.category ? Number(filters.category) : null,
     );
-    const [selectedPersonalizations, setSelectedPersonalizations] = useState<
-        Record<string, number[]>
-    >(filters.personalizations ?? {});
 
-    const [showLoginModal, setShowLoginModal] = useState(false);
+    // Modal & Personalization State
     const [showPersonalizeModal, setShowPersonalizeModal] = useState(false);
-    const debounceRef = useRef<NodeJS.Timeout | null>(null);
+    const [selectedOptionIds, setSelectedOptionIds] = useState<number[]>(
+        user_selected_ids || [],
+    );
+    const [loadingPref, setLoadingPref] = useState(false);
 
     const [loadingId, setLoadingId] = useState<number | null>(null);
     const [notification, setNotification] = useState<{
@@ -88,7 +98,12 @@ export default function Menus() {
         type: 'success' | 'error';
     } | null>(null);
 
-    // Efek untuk menghilangkan notifikasi otomatis setelah 3 detik
+    /* ================= EFFECT ================= */
+    // Sync state ketika data dari server (user_selected_ids) berubah
+    useEffect(() => {
+        setSelectedOptionIds(user_selected_ids || []);
+    }, [user_selected_ids]);
+
     useEffect(() => {
         if (notification) {
             const timer = setTimeout(() => setNotification(null), 3000);
@@ -96,16 +111,7 @@ export default function Menus() {
         }
     }, [notification]);
 
-    /* ================= EFFECT ================= */
-    useEffect(() => {
-        setSelectedPersonalizations(filters.personalizations ?? {});
-        setSearch(filters.search ?? '');
-        setActiveCategory(filters.category ? Number(filters.category) : null);
-    }, [filters]);
-
-    /* ================= LOGIKA FILTER ================= */
-
-    // Perbaikan Error TS: Menggunakan Record<string, any> sebagai ganti object
+    /* ================= LOGIC ================= */
     const performQuery = (params: Record<string, any>) => {
         router.get('/menus', params, {
             preserveScroll: true,
@@ -115,99 +121,69 @@ export default function Menus() {
 
     const handleSearchChange = (value: string) => {
         setSearch(value);
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-
-        debounceRef.current = setTimeout(() => {
-            performQuery({
-                search: value,
-                category: activeCategory,
-                personalizations: selectedPersonalizations,
-            });
+        const timeout = setTimeout(() => {
+            performQuery({ search: value, category: activeCategory });
         }, 600);
+        return () => clearTimeout(timeout);
     };
 
-    const selectCategory = (id: number | null) => {
-        setActiveCategory(id);
-        performQuery({
-            search,
-            category: id,
-            personalizations: selectedPersonalizations,
+    const handleToggle = (type: any, optionId: number) => {
+        const optionIdsInThisType = type.personalization_options.map(
+            (o: any) => o.id,
+        );
+        setSelectedOptionIds((prev) => {
+            if (type.selection_type === 'single') {
+                const filtered = prev.filter(
+                    (id) => !optionIdsInThisType.includes(id),
+                );
+                return [...filtered, optionId];
+            } else {
+                return prev.includes(optionId)
+                    ? prev.filter((id) => id !== optionId)
+                    : [...prev, optionId];
+            }
         });
     };
 
-    const toggleOption = (type: PersonalizationType, optionId: number) => {
-        setSelectedPersonalizations((prev) => {
-            const key = type.slug;
-            const current = prev[key]
-                ? Object.values(prev[key]).map((id) => Number(id))
-                : [];
-
-            const updated =
-                type.selection_type === 'single'
-                    ? [optionId]
-                    : current.includes(optionId)
-                      ? current.filter((id) => id !== optionId)
-                      : [...current, optionId];
-
-            const nextState = { ...prev, [key]: updated };
-            if (updated.length === 0) delete nextState[key];
-            return nextState;
-        });
-    };
-
-    const resetFilters = () => {
-        setSelectedPersonalizations({});
-        performQuery({
-            search,
-            category: activeCategory,
-            personalizations: null,
-        });
-        setShowPersonalizeModal(false);
-    };
-
-    const applyPersonalization = () => {
-        performQuery({
-            search,
-            category: activeCategory,
-            personalizations:
-                Object.keys(selectedPersonalizations).length > 0
-                    ? selectedPersonalizations
-                    : null,
-        });
-        setShowPersonalizeModal(false);
+    const applyPersonalization = async () => {
+        setLoadingPref(true);
+        try {
+            await axios.post('/personalization/save', {
+                option_ids: selectedOptionIds,
+            });
+            setShowPersonalizeModal(false);
+            router.reload({ preserveScroll: true });
+            setNotification({
+                message: 'Preferences updated!',
+                type: 'success',
+            });
+        } catch (error) {
+            setNotification({
+                message: 'Failed to update preferences.',
+                type: 'error',
+            });
+        } finally {
+            setLoadingPref(false);
+        }
     };
 
     const handleAddToCart = (menu: Menu) => {
         if (!auth?.user) {
-            setShowLoginModal(true);
+            router.visit(login());
             return;
         }
-
         router.post(
             '/carts/add',
-            {
-                menu_id: menu.id,
-            },
+            { menu_id: menu.id },
             {
                 preserveScroll: true,
-                onStart: () => {
-                    setLoadingId(menu.id); // Mulai loading pada tombol yang diklik
-                },
-                onSuccess: () => {
+                onStart: () => setLoadingId(menu.id),
+                onSuccess: () =>
                     setNotification({
-                        message: `${menu.name} successfully added to cart!`,
+                        message: `${menu.name} added to cart!`,
                         type: 'success',
-                    });
-                },
-                onError: () => {
-                    setNotification({
-                        message: 'Failed to add item. Please try again.',
-                        type: 'error',
-                    });
-                },
-                onFinish: () => {
-                    setLoadingId(null); // Matikan loading apa pun hasilnya
-                },
+                    }),
+                onFinish: () => setLoadingId(null),
             },
         );
     };
@@ -216,9 +192,9 @@ export default function Menus() {
         <div className="min-h-screen bg-[#02080c]">
             <NavbarClient />
 
-            {/* --- POPUP NOTIFICATION --- */}
+            {/* --- NOTIFICATION --- */}
             {notification && (
-                <div className="fixed top-24 left-1/2 z-[100] w-[90%] -translate-x-1/2 animate-in duration-300 fade-in slide-in-from-top-4 sm:right-6 sm:left-auto sm:w-full sm:max-w-md sm:translate-x-0">
+                <div className="fixed top-24 right-6 z-[100] w-[90%] max-w-md animate-in fade-in slide-in-from-top-4 sm:right-6">
                     <div
                         className={`flex items-center gap-4 rounded-lg border p-4 shadow-2xl backdrop-blur-md ${
                             notification.type === 'error'
@@ -235,14 +211,12 @@ export default function Menus() {
                                 <CheckCircle2 size={20} color="white" />
                             )}
                         </div>
-                        <div className="flex-1">
-                            <p className="text-sm font-medium text-white">
-                                {notification.message}
-                            </p>
-                        </div>
+                        <p className="flex-1 text-sm font-medium text-white">
+                            {notification.message}
+                        </p>
                         <button
                             onClick={() => setNotification(null)}
-                            className="text-white/60 transition-colors hover:text-white"
+                            className="text-white/60 hover:text-white"
                         >
                             <X size={18} />
                         </button>
@@ -250,39 +224,36 @@ export default function Menus() {
                 </div>
             )}
 
-            {/* --- HEADER SECTION (DESIGN MATCHED) --- */}
-            <section className="relative h-[350px] w-full overflow-hidden md:h-[450px] lg:h-[550px]">
-                <div className="absolute inset-0 z-0">
+            {/* --- HEADER --- */}
+            <section className="relative h-[350px] w-full overflow-hidden md:h-[450px]">
+                <div className="absolute inset-0">
                     <img
                         src="/images/wine-putih.jpg"
-                        alt="Background"
                         className="h-full w-full object-cover opacity-60"
                     />
                     <div className="absolute inset-0 bg-black/40" />
                 </div>
                 <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
-                    <h1 className="font-serif text-5xl tracking-wide text-white md:text-6xl lg:text-7xl">
+                    <h1 className="font-serif text-5xl tracking-wide text-white md:text-6xl">
                         Our Menu
                     </h1>
-                    <p className="mt-4 max-w-lg text-sm font-light text-gray-300 md:text-base">
-                        Discover our carefully curated selection of culinary
-                        delights.
-                    </p>
-                    <button
-                        onClick={() => setShowPersonalizeModal(true)}
-                        className="mt-8 flex cursor-pointer items-center gap-3 bg-[#9c6b3b] px-8 py-3 text-xs tracking-[0.2em] text-white uppercase transition-all hover:bg-[#b07a43] md:py-5"
-                    >
-                        <Settings2 size={16} /> Personalize Menu
-                    </button>
+                    {auth.user && (
+                        <button
+                            onClick={() => setShowPersonalizeModal(true)}
+                            className="mt-8 flex items-center gap-3 bg-[#9c6b3b] px-8 py-4 text-xs tracking-[0.2em] text-white uppercase transition-all hover:bg-[#b07a43]"
+                        >
+                            <Settings2 size={16} /> Change Your Personalization
+                        </button>
+                    )}
                 </div>
-                <div className="absolute bottom-0 left-0 z-20 h-32 w-full bg-gradient-to-t from-[#02080c] to-transparent" />
+                <div className="absolute bottom-0 h-32 w-full bg-gradient-to-t from-[#02080c] to-transparent" />
             </section>
 
-            {/* --- SEARCH & CATEGORY SECTION --- */}
+            {/* --- SEARCH & CATEGORY --- */}
             <section className="relative z-30 px-6 pb-20">
                 <div className="mx-auto max-w-7xl">
                     <div className="mb-12 flex justify-center">
-                        <div className="relative w-full max-w-sm md:max-w-2xl lg:max-w-4xl">
+                        <div className="relative w-full max-w-2xl">
                             <input
                                 type="text"
                                 placeholder="Search your favorite dish..."
@@ -299,10 +270,12 @@ export default function Menus() {
                         </div>
                     </div>
 
-                    <div className="no-scrollbar flex flex-nowrap gap-4 overflow-x-auto scroll-smooth pb-4">
+                    <div className="no-scrollbar flex gap-4 overflow-x-auto pb-4">
                         <button
-                            onClick={() => selectCategory(null)}
-                            className={`min-w-[160px] border px-6 py-4 text-xs tracking-widest uppercase transition-all duration-300 ${
+                            onClick={() =>
+                                performQuery({ search, category: null })
+                            }
+                            className={`min-w-[160px] border px-6 py-4 text-xs tracking-widest uppercase transition-all ${
                                 activeCategory === null
                                     ? 'border-[#9c6b3b] bg-[#9c6b3b] text-white'
                                     : 'border-[#9c6b3b] text-white hover:bg-[#9c6b3b]'
@@ -313,8 +286,10 @@ export default function Menus() {
                         {categories.map((cat) => (
                             <button
                                 key={cat.id}
-                                onClick={() => selectCategory(cat.id)}
-                                className={`min-w-[160px] border px-6 py-4 text-xs tracking-widest uppercase transition-all duration-300 ${
+                                onClick={() =>
+                                    performQuery({ search, category: cat.id })
+                                }
+                                className={`min-w-[160px] border px-6 py-4 text-xs tracking-widest uppercase transition-all ${
                                     activeCategory === cat.id
                                         ? 'border-[#9c6b3b] bg-[#9c6b3b] text-white'
                                         : 'border-[#9c6b3b] text-white hover:bg-[#9c6b3b]'
@@ -326,229 +301,163 @@ export default function Menus() {
                     </div>
                 </div>
 
-                {/* --- MENU GRID --- */}
-                <div className="mx-auto mt-16 max-w-7xl">
-                    {menus.data.length === 0 && (
-                        <div className="py-20 text-center text-sm tracking-widest text-gray-400 uppercase">
-                            No result found
-                        </div>
-                    )}
-                    <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
-                        {menus.data.map((menu) => (
-                            <div
-                                key={menu.id}
-                                className="group flex flex-col overflow-hidden rounded-md border border-white/5 bg-[#0a1219] shadow-xl transition-all duration-500 hover:border-[#9c6b3b]/30 hover:bg-[#0e1821]"
-                            >
-                                {/* Image Container - Menempel ke atas, kiri, kanan */}
-                                <div className="relative aspect-[4/3] overflow-hidden">
-                                    <img
-                                        src={`/storage/menus/${menu.image}`}
-                                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                        alt={menu.name}
-                                    />
-                                    {/* Overlay gradien halus agar teks lebih pop jika ada badge nantinya */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a1219]/50 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                                </div>
-
-                                {/* Content Container - Baru diberi padding di sini */}
-                                <div className="flex flex-1 flex-col p-6">
-                                    <h3 className="mb-2 font-serif text-xl tracking-wide text-white transition-colors group-hover:text-[#c5a059]">
-                                        {menu.name}
-                                    </h3>
-
-                                    <p className="mb-4 line-clamp-2 text-sm leading-relaxed font-light text-gray-400">
-                                        {menu.description}
-                                    </p>
-
-                                    <div className="mb-6 text-lg text-[#c5a059]">
-                                        Rp{' '}
-                                        {Number(menu.price).toLocaleString(
-                                            'id-ID',
-                                        )}
-                                    </div>
-
-                                    <button
-                                        onClick={() => handleAddToCart(menu)}
-                                        disabled={loadingId === menu.id}
-                                        className={`group/btn relative mt-auto flex cursor-pointer items-center justify-center overflow-hidden border border-[#9c6b3b] py-3.5 text-[10px] tracking-[0.2em] text-white uppercase transition-all ${loadingId === menu.id ? 'cursor-not-allowed opacity-70' : 'hover:text-white'}`}
-                                    >
-                                        {/* Efek fill gold hanya muncul jika tidak sedang loading */}
-                                        {loadingId !== menu.id && (
-                                            <span className="absolute inset-0 translate-y-full bg-[#9c6b3b] transition-transform duration-300 group-hover/btn:translate-y-0" />
-                                        )}
-
-                                        <span className="relative z-10 flex items-center gap-2">
-                                            {loadingId === menu.id ? (
-                                                <>
-                                                    <Loader2
-                                                        size={14}
-                                                        className="animate-spin"
-                                                    />
-                                                    Processing...
-                                                </>
-                                            ) : (
-                                                'Add to Cart'
-                                            )}
-                                        </span>
-                                    </button>
-                                </div>
+                <div className="mx-auto mt-16 max-w-7xl space-y-28">
+                    {/* --- SECTION 1: YOUR FOOD PREFERENCES (Login Only) --- */}
+                    {auth.user && (
+                        <div>
+                            <div className="mb-10 flex items-center gap-4">
+                                <h2 className="font-serif text-3xl tracking-wide text-[#c5a059] italic">
+                                    Your Food Preferences
+                                </h2>
+                                <div className="h-px flex-1 bg-[#c5a059]/20" />
                             </div>
-                        ))}
-                    </div>
 
-                    {/* PAGINATION */}
-                    {menus.links.length > 3 && (
-                        <div className="mt-20 flex justify-center gap-2">
-                            {menus.links.map((link, idx) => (
-                                <Link
-                                    key={idx}
-                                    href={link.url || '#'}
-                                    preserveScroll
-                                    className={`border px-4 py-2 text-[10px] tracking-widest uppercase ${
-                                        link.active
-                                            ? 'bg-[#9c6b3b] text-white'
-                                            : !link.url
-                                              ? 'cursor-not-allowed text-gray-600'
-                                              : 'text-white hover:bg-[#9c6b3b]'
-                                    } border-[#9c6b3b]`}
-                                    dangerouslySetInnerHTML={{
-                                        __html: link.label,
-                                    }}
-                                />
-                            ))}
+                            {personalized_menus.length > 0 ? (
+                                <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
+                                    {personalized_menus.map((menu) => (
+                                        <MenuCard
+                                            key={`pref-${menu.id}`}
+                                            menu={menu}
+                                            loadingId={loadingId}
+                                            onAdd={() => handleAddToCart(menu)}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="rounded-lg border border-dashed border-[#c5a059]/20 bg-[#c5a059]/5 py-20 text-center">
+                                    <p className="text-xs font-light tracking-[0.2em] text-[#c5a059]/60 uppercase">
+                                        We cannot find menus matching your food
+                                        preferences
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
+
+                    {/* --- SECTION 2: ALL FOODS --- */}
+                    <div>
+                        <div className="mb-10 flex items-center gap-4">
+                            <h2 className="font-serif text-3xl tracking-wide text-white">
+                                All Menus
+                            </h2>
+                            <div className="h-px flex-1 bg-white/10" />
+                        </div>
+
+                        {menus.data.length > 0 ? (
+                            <>
+                                <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
+                                    {menus.data.map((menu) => (
+                                        <MenuCard
+                                            key={`all-${menu.id}`}
+                                            menu={menu}
+                                            loadingId={loadingId}
+                                            onAdd={() => handleAddToCart(menu)}
+                                        />
+                                    ))}
+                                </div>
+
+                                {/* PAGINATION */}
+                                {menus.links.length > 3 && (
+                                    <div className="mt-20 flex justify-center gap-2">
+                                        {menus.links.map((link, idx) => (
+                                            <Link
+                                                key={idx}
+                                                href={link.url || '#'}
+                                                preserveScroll
+                                                className={`border px-4 py-2 text-[10px] tracking-widest uppercase transition-all ${
+                                                    link.active
+                                                        ? 'border-[#9c6b3b] bg-[#9c6b3b] text-white'
+                                                        : 'border-[#9c6b3b]/40 text-white hover:bg-[#9c6b3b]'
+                                                } ${!link.url ? 'cursor-not-allowed opacity-30' : ''}`}
+                                                dangerouslySetInnerHTML={{
+                                                    __html: link.label,
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="py-24 text-center">
+                                <p className="text-xs font-light tracking-[0.2em] text-gray-500 uppercase">
+                                    We cannot find any menus
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </section>
 
-            {/* --- PERSONALIZATION MODAL (DESIGN MATCHED) --- */}
-            {showPersonalizeModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
-                    <div
-                        className="absolute inset-0 bg-black/90 backdrop-blur-md"
-                        onClick={() => setShowPersonalizeModal(false)}
-                    />
-                    <div className="no-scrollbar relative max-h-[90vh] w-full max-w-2xl overflow-y-auto border border-white/10 bg-[#0a1219] p-6 shadow-2xl md:p-10">
-                        <div className="mb-10 flex items-center justify-between border-b border-white/5 pb-6">
-                            <h2 className="font-serif text-2xl tracking-wide text-white md:text-3xl">
-                                Personalize Your Menu
-                            </h2>
-                            <button
-                                onClick={() => setShowPersonalizeModal(false)}
-                                className="text-gray-500 hover:text-[#9c6b3b]"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
+            {/* --- MODALS --- */}
+            <PersonalizationModal
+                show={showPersonalizeModal}
+                loading={loadingPref}
+                data={personalizations}
+                selectedIds={selectedOptionIds}
+                onToggle={handleToggle}
+                onSave={applyPersonalization}
+                onClose={() => setShowPersonalizeModal(false)}
+            />
+        </div>
+    );
+}
 
-                        <div className="space-y-12">
-                            {personalizations.map((type) => (
-                                <section key={type.id}>
-                                    <div className="mb-4 flex items-center gap-3">
-                                        <span className="text-[#9c6b3b]">
-                                            {type.selection_mode === 'exclude'
-                                                ? '⚠️'
-                                                : '✨'}
-                                        </span>
-                                        <h4 className="text-base font-bold tracking-widest text-white uppercase">
-                                            {type.name}
-                                        </h4>
-                                    </div>
-                                    <p className="mb-6 text-sm text-gray-300">
-                                        {type.label}
-                                    </p>
-                                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                                        {type.personalization_options.map(
-                                            (opt) => {
-                                                const isSelected =
-                                                    selectedPersonalizations[
-                                                        type.slug
-                                                    ]?.some(
-                                                        (id) =>
-                                                            Number(id) ===
-                                                            opt.id,
-                                                    );
-                                                return (
-                                                    <button
-                                                        key={opt.id}
-                                                        onClick={() =>
-                                                            toggleOption(
-                                                                type,
-                                                                opt.id,
-                                                            )
-                                                        }
-                                                        className={`border px-2 py-3 text-[10px] tracking-widest uppercase transition-all duration-300 ${
-                                                            isSelected
-                                                                ? 'border-[#9c6b3b] bg-[#9c6b3b] text-white'
-                                                                : 'border-[#9c6b3b] text-white hover:bg-[#9c6b3b]'
-                                                        }`}
-                                                    >
-                                                        {opt.name}
-                                                    </button>
-                                                );
-                                            },
-                                        )}
-                                    </div>
-                                </section>
-                            ))}
-                        </div>
+/* =====================================================
+| SUB-COMPONENT: MENU CARD
+===================================================== */
+function MenuCard({
+    menu,
+    loadingId,
+    onAdd,
+}: {
+    menu: Menu;
+    loadingId: number | null;
+    onAdd: () => void;
+}) {
+    const isLoading = loadingId === menu.id;
 
-                        <div className="mt-16 flex flex-col gap-4 border-t border-white/10 pt-8 md:flex-row">
-                            <button
-                                onClick={resetFilters}
-                                className="flex-1 border border-gray-500 py-4 text-[10px] tracking-[0.2em] text-gray-300 uppercase transition-all hover:border-white hover:text-white"
-                            >
-                                Clear All
-                            </button>
-                            <button
-                                onClick={applyPersonalization}
-                                className="flex-1 bg-[#9c6b3b] py-4 text-[10px] font-bold tracking-[0.2em] text-white uppercase transition-all hover:bg-[#b07a43]"
-                            >
-                                Apply Filters
-                            </button>
-                        </div>
-                    </div>
+    return (
+        <div className="group flex flex-col overflow-hidden rounded-md border border-white/5 bg-[#0a1219] shadow-xl transition-all duration-500 hover:border-[#9c6b3b]/30 hover:bg-[#0e1821]">
+            <div className="relative aspect-[4/3] overflow-hidden">
+                <img
+                    src={`/storage/menus/${menu.image}`}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    alt={menu.name}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a1219]/50 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+            </div>
+
+            <div className="flex flex-1 flex-col p-6">
+                <h3 className="mb-2 font-serif text-xl tracking-wide text-white transition-colors group-hover:text-[#c5a059]">
+                    {menu.name}
+                </h3>
+                <p className="mb-4 line-clamp-2 text-sm leading-relaxed font-light text-gray-400">
+                    {menu.description}
+                </p>
+                <div className="mb-6 text-lg text-[#c5a059]">
+                    Rp {Number(menu.price).toLocaleString('id-ID')}
                 </div>
-            )}
 
-            {/* --- LOGIN MODAL (DESIGN MATCHED) --- */}
-            {showLoginModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-                    <div
-                        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-                        onClick={() => setShowLoginModal(false)}
-                    />
-                    <div className="relative w-full max-w-md border border-white/10 bg-[#0a1219] p-8 text-center shadow-2xl md:p-12">
-                        <button
-                            onClick={() => setShowLoginModal(false)}
-                            className="absolute top-4 right-4 text-gray-500 hover:text-white"
-                        >
-                            <X size={24} />
-                        </button>
-                        <h2 className="mb-4 font-serif text-2xl text-white">
-                            Login Required
-                        </h2>
-                        <p className="mb-8 text-sm font-light text-gray-400">
-                            You need to be logged in to order our delicious
-                            menu.
-                        </p>
-                        <div className="flex flex-col gap-3">
-                            <Link
-                                href={login()}
-                                className="w-full bg-[#9c6b3b] py-3.5 text-xs font-bold tracking-[0.2em] text-white uppercase"
-                            >
-                                Sign In Now
-                            </Link>
-                            <button
-                                onClick={() => setShowLoginModal(false)}
-                                className="w-full border border-white/10 py-3.5 text-[10px] text-gray-400 uppercase"
-                            >
-                                Continue Browsing
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                <button
+                    onClick={onAdd}
+                    disabled={isLoading}
+                    className="group/btn relative mt-auto flex items-center justify-center overflow-hidden border border-[#9c6b3b] py-3.5 text-[10px] tracking-[0.2em] text-white uppercase transition-all disabled:opacity-50"
+                >
+                    {!isLoading && (
+                        <span className="absolute inset-0 translate-y-full bg-[#9c6b3b] transition-transform duration-300 group-hover/btn:translate-y-0" />
+                    )}
+                    <span className="relative z-10 flex items-center gap-2">
+                        {isLoading ? (
+                            <>
+                                <Loader2 size={14} className="animate-spin" />
+                                Processing...
+                            </>
+                        ) : (
+                            'Add to Cart'
+                        )}
+                    </span>
+                </button>
+            </div>
         </div>
     );
 }
