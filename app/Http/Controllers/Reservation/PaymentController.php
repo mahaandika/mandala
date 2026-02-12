@@ -213,7 +213,7 @@ class PaymentController extends Controller
     public function processPayment(Request $request, Booking $booking)
     {
         $request->validate([
-            'payment_method' => 'required|in:cash,qris,debit,visa',
+            'payment_method' => 'required|in:cash,qris,debit,kredit',
             'total_amount' => 'required|numeric',
             'amount_tendered' => 'nullable|numeric|gte:total_amount',
         ]);
