@@ -19,7 +19,7 @@ class PersonalMenuController extends Controller
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
             })
-            ->paginate(10)
+            ->paginate(5)
             ->withQueryString(); // Menjaga query parameter saat pindah halaman
 
         return Inertia::render('admin/personalMenu/index', [
