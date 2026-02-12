@@ -146,22 +146,40 @@ class MenuController extends Controller
                 ->groupBy('personalization_type_id');
 
             if ($userOptions->isNotEmpty()) {
+                // Inisialisasi array untuk menampung ID include dan exclude
+                $allIncludeIds = [];
+                $allExcludeIds = [];
+
                 foreach ($userOptions as $options) {
                     $type = $options->first()->personalizationType;
                     $optionIds = $options->pluck('id')->toArray();
 
                     if ($type->selection_mode === 'include') {
-                        $prefQuery->whereHas('personalizationOptions', function ($q) use ($optionIds) {
-                            $q->whereIn('personalization_option_id', $optionIds);
-                        });
+                        // Kumpulkan semua ID yang user inginkan (Flavor Savory, Creamy, dll)
+                        $allIncludeIds = array_merge($allIncludeIds, $optionIds);
                     } else {
-                        $prefQuery->whereDoesntHave('personalizationOptions', function ($q) use ($optionIds) {
-                            $q->whereIn('personalization_option_id', $optionIds);
-                        });
+                        // Kumpulkan semua ID yang user hindari (Alergi, dll)
+                        $allExcludeIds = array_merge($allExcludeIds, $optionIds);
                     }
                 }
 
-                // Tetap filter search dan kategori pada "Your Preferences" agar sinkron
+                // --- LOGIKA INCLUDE (Logika OR) ---
+                if (!empty($allIncludeIds)) {
+                    $prefQuery->whereHas('personalizationOptions', function ($q) use ($allIncludeIds) {
+                        // Ini akan mengambil menu yang punya SETIDAKNYA satu dari ID yang dipilih
+                        $q->whereIn('personalization_option_id', $allIncludeIds);
+                    });
+                }
+
+                // --- LOGIKA EXCLUDE (Logika AND untuk keamanan) ---
+                if (!empty($allExcludeIds)) {
+                    // Menu yang mengandung salah satu dari yang dihindari tidak akan tampil
+                    $prefQuery->whereDoesntHave('personalizationOptions', function ($q) use ($allExcludeIds) {
+                        $q->whereIn('personalization_option_id', $allExcludeIds);
+                    });
+                }
+
+                // Filter tambahan (Search & Category)
                 if ($request->filled('search')) {
                     $prefQuery->where('name', 'like', '%' . $request->search . '%');
                 }
