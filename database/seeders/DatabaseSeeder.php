@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
                 PersonalizationOptionSeeder::class,
                 CategoryMenuSeeder::class,
                 ResturantTableSeeder::class,
-                BookingSeeder::class
+                // BookingSeeder::class
             ]
         );
     }   
