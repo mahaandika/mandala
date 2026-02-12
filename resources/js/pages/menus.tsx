@@ -306,7 +306,7 @@ export default function Menus() {
                     {auth.user && (
                         <div>
                             <div className="mb-10 flex items-center gap-4">
-                                <h2 className="font-serif text-3xl tracking-wide text-[#c5a059] italic">
+                                <h2 className="font-serif text-3xl tracking-wide text-white">
                                     Your Food Preferences
                                 </h2>
                                 <div className="h-px flex-1 bg-[#c5a059]/20" />
