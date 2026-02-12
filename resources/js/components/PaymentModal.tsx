@@ -19,7 +19,7 @@ interface Props {
     onSuccess: () => void; // Callback untuk refresh data parent
 }
 
-type PaymentMethod = 'cash' | 'qris' | 'debit' | 'visa';
+type PaymentMethod = 'cash' | 'qris' | 'debit' | 'kredit';
 
 export default function PaymentModal({
     booking,
@@ -142,10 +142,10 @@ export default function PaymentModal({
                                         label="Debit"
                                     />
                                     <MethodButton
-                                        active={method === 'visa'}
-                                        onClick={() => setMethod('visa')}
+                                        active={method === 'kredit'}
+                                        onClick={() => setMethod('kredit')}
                                         icon={<CreditCard size={18} />}
-                                        label="Visa"
+                                        label="Kredit"
                                     />
                                 </div>
                             </div>
