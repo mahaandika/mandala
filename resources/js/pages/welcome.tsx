@@ -127,7 +127,7 @@ export default function Welcome() {
                                 Experience the harmony of flavor and culture in
                                 every handcrafted dish.
                             </p>
-                            <Link href="/reservation">
+                            <Link href="/reservations">
                                 <button className="group flex w-fit cursor-pointer items-center gap-4 border border-[#9c6b3b] px-8 py-5 text-sm tracking-widest text-white uppercase transition-all duration-500 hover:bg-[#9c6b3b]">
                                     book a table
                                     <span className="h-[1px] w-12 bg-white transition-colors"></span>
