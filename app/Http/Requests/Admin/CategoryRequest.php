@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CategoryRequest extends FormRequest
 {
@@ -22,8 +24,8 @@ class CategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required' ,'max:255',
-            'is_active' => 'required', 'boolean'
+            'name' => ['required' ,'max:255', Rule::unique(Category::class)],
+            'is_active' => ['required', 'boolean']
         ];
     }
 
@@ -32,6 +34,7 @@ class CategoryRequest extends FormRequest
         return [
             'name.required' => 'Nama perlu diisi',
             'name.max' => 'Nama tidak boleh lebih dari 255 karakter',
+            'name.unique' => 'Nama kategori ini sudah ada, gunakan nama lain',
             'is_active.required' => 'Kategori keaktifan tidak boleh kosong',
         ];
     }
