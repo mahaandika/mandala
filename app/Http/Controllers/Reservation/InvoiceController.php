@@ -33,7 +33,7 @@ class InvoiceController extends Controller
             'totalWalkIn'  => $totalWalkIn,
             'payment'      => $payment,
         ])
-        ->setPaper('A4', 'portrait')
+        ->setPaper([0, 0, 226, 600], 'portrait') // kertas ukuran 80mm 
         ->stream('Invoice-' . $booking->booking_code . '.pdf');
     }
 
