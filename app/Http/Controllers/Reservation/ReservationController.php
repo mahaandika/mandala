@@ -106,6 +106,9 @@ class ReservationController extends Controller
                 return back()->withErrors(['time' => "Waktu sudah terlewat. Silahkan pilih jam setelah $currentTime."]);
             }
         }
+        if ($bookingDate->gt(now()->addMonths(2))) {
+            return back()->withErrors(['booking_date' => 'Maksimal pemesanan hanya bisa 2 bulan ke depan.']);
+        }
 
         $user = Auth::user();
         $pax = $request->person;
