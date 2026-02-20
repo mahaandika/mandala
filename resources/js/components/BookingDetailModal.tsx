@@ -41,6 +41,7 @@ export default function BookingDetailModal({
     >(null);
     const [showPayment, setShowPayment] = useState(false);
     const [showSuccessPrint, setShowSuccessPrint] = useState(false);
+    console.log(booking);
 
     // --- NAVIGASI ---
     const currentIndex = allBookingIds.indexOf(booking.id);
