@@ -2,9 +2,11 @@ import { logout } from '@/routes';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+// Tambahkan baris ini di bagian atas file
 
 export default function NavbarClient() {
     const { auth, url } = usePage<SharedData>().props;
+    console.log('Auth Props:', auth);
     const [scrolled, setScrolled] = useState(false);
     const [open, setOpen] = useState(false);
 
@@ -71,8 +73,22 @@ export default function NavbarClient() {
                         </Link>
                     </li>
                     <li>
-                        <Link href="/carts" className={menuClass('/carts')}>
-                            CART
+                        <Link
+                            href="/carts"
+                            className={`group relative flex items-center gap-2 ${menuClass('/carts')}`}
+                        >
+                            {/* <ShoppingBag className="h-4 w-4 transition-transform group-hover:-translate-y-1" /> */}
+                            <span>CART</span>
+                            {auth.user && auth.cartCount > 0 && (
+                                <span className="absolute -top-2 -right-3 flex h-4 w-4">
+                                    {/* Efek denyut halus (ping) agar menarik perhatian */}
+                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#c8a75e] opacity-75"></span>
+                                    {/* Badge Angka */}
+                                    <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-[#c8a75e] text-[10px] font-bold text-black">
+                                        {auth.cartCount}
+                                    </span>
+                                </span>
+                            )}
                         </Link>
                     </li>
 
@@ -91,8 +107,11 @@ export default function NavbarClient() {
                         </li>
                     ) : (
                         <li>
-                            <Link href="/login" className={menuClass('/login')}>
-                                LOGIN
+                            <Link
+                                href="/register"
+                                className={menuClass('/login')}
+                            >
+                                REGISTER
                             </Link>
                         </li>
                     )}
