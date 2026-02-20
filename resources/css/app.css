@@ -159,3 +159,67 @@
         display: none !important;
     }
 }
+/* Wrapper utama */
+.phone-input-dark {
+    background-color: #16202d;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+}
+
+/* Input number */
+.phone-input-dark .PhoneInputInput {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    width: 100%;
+}
+
+/* Country select button */
+.phone-input-dark .PhoneInputCountry {
+    background: transparent;
+}
+
+/* Dropdown select */
+.phone-input-dark .PhoneInputCountrySelect {
+    background-color: #000 !important;
+    color: white !important;
+    border: none;
+}
+
+/* Option dalam dropdown */
+.phone-input-dark .PhoneInputCountrySelect option {
+    background-color: #000;
+    color: white;
+}
+
+/* Focus state */
+.phone-input-dark:focus-within {
+    border-color: #c5a059;
+}
+
+/* phone input register style */
+/* Menghilangkan focus ring default pada input nomor telepon */
+.PhoneInputInput {
+    border: none !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    width: 100%;
+    margin-left: 0.5rem;
+}
+
+/* Mengatur jarak bendera agar tidak menempel */
+.PhoneInputCountry {
+    margin-right: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+/* Memastikan focus ring Shadcn muncul pada container saat input di dalam diklik */
+.PhoneInput:focus-within {
+    outline: none;
+}
