@@ -13,6 +13,8 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 // --- TYPES & INTERFACES ---
 type TableStatus = 'available' | 'reserved';
@@ -211,7 +213,17 @@ export default function Reservations({
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Ambil waktu saat ini
+
+        // 1. VALIDASI FIELD KOSONG (Pengganti 'required' HTML5)
+        if (!data.name || !data.phone || !data.date || !data.time) {
+            setNotification({
+                message:
+                    'Mohon lengkapi semua data reservasi (Nama, HP, Tanggal & Waktu)!',
+                type: 'error',
+            });
+            return;
+        }
+
         const now = new Date();
         const currentTimeStr =
             now.getHours().toString().padStart(2, '0') +
@@ -220,7 +232,6 @@ export default function Reservations({
 
         // --- VALIDASI JAM OPERASIONAL ---
         if (data.time < MIN_TIME || data.time > MAX_TIME) {
-            console.log(data.time, MIN_TIME, MAX_TIME);
             setNotification({
                 message: `Jam operasional adalah ${MIN_TIME} - ${MAX_TIME}`,
                 type: 'error',
@@ -237,7 +248,7 @@ export default function Reservations({
             return;
         }
 
-        // 1. Ambil data meja yang sedang dipilih
+        // 2. LOGIKA KAPASITAS MEJA
         const selectedTablesData = tables.filter((t) =>
             data.table_ids.includes(t.id.toString()),
         );
@@ -246,9 +257,7 @@ export default function Reservations({
             0,
         );
 
-        // --- VALIDASI FRONTEND ---
-
-        // Cek apakah ada meja yang dipilih
+        // --- VALIDASI PILIH MEJA ---
         if (data.table_ids.length === 0) {
             setNotification({
                 message: 'Silahkan pilih minimal satu meja pada peta!',
@@ -266,8 +275,7 @@ export default function Reservations({
             return;
         }
 
-        // Validasi Efisiensi (Anti-Hoarding):
-        // Jika milih > 1 meja, tapi ada salah satu meja yang sebenarnya sudah cukup untuk pax tersebut.
+        // Validasi Efisiensi (Anti-Hoarding)
         const hasSingleAdequateTable =
             selectedTablesData.length > 1 &&
             selectedTablesData.some((t) => t.capacity >= data.person);
@@ -281,27 +289,37 @@ export default function Reservations({
             return;
         }
 
-        // 2. Kirim ke Backend menggunakan path string langsung
+        // 3. KIRIM KE BACKEND
         post('/bookings', {
             onSuccess: () => {
                 setNotification({
                     message: 'Reservasi berhasil dimasukkan ke keranjang!',
                     type: 'success',
                 });
+                // Opsional: Hilangkan notifikasi otomatis setelah 3 detik
+                setTimeout(() => setNotification(null), 3000);
             },
             onError: (err) => {
-                // Ambil pesan error pertama dari kiriman backend (Validation Errors)
                 const errorMessages = Object.values(err);
                 setNotification({
                     message:
                         errorMessages.length > 0
                             ? String(errorMessages[0])
-                            : 'Terjadi kesalahan.',
+                            : 'Terjadi kesalahan pada server.',
                     type: 'error',
                 });
             },
         });
     };
+
+    // Ambil tanggal hari ini
+    const todayObj = new Date();
+    const today = todayObj.toISOString().split('T')[0];
+
+    // Hitung tanggal 2 bulan ke depan
+    const maxDateObj = new Date();
+    maxDateObj.setMonth(maxDateObj.getMonth() + 2);
+    const maxDate = maxDateObj.toISOString().split('T')[0];
 
     return (
         <div className="min-h-screen bg-[#050a11] text-white selection:bg-[#c5a059] selection:text-black">
@@ -376,7 +394,11 @@ export default function Reservations({
                             Details
                         </h2>
 
-                        <form onSubmit={submit} className="space-y-5">
+                        <form
+                            onSubmit={submit}
+                            className="space-y-5"
+                            noValidate
+                        >
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-medium text-gray-400">
                                     <User
@@ -418,22 +440,24 @@ export default function Reservations({
 
                             {/* Input Phone - Bisa Diedit */}
                             <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-400">
-                                    <Phone
-                                        size={16}
-                                        className="text-[#c5a059]"
-                                    />{' '}
-                                    Phone
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full rounded-lg border border-white/10 bg-[#16202d] p-3 outline-none focus:border-[#c5a059]"
-                                    value={data.phone}
-                                    onChange={(e) =>
-                                        setData('phone', e.target.value)
-                                    }
-                                />
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm font-medium text-gray-400">
+                                        <Phone
+                                            size={16}
+                                            className="text-[#c5a059]"
+                                        />{' '}
+                                        Phone
+                                    </label>
+                                    <PhoneInput
+                                        international
+                                        defaultCountry="ID"
+                                        value={data.phone}
+                                        onChange={(value) =>
+                                            setData('phone', value || '')
+                                        }
+                                        className="phone-input-dark w-full"
+                                    />
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -478,7 +502,8 @@ export default function Reservations({
                                     </label>
                                     <input
                                         type="date"
-                                        min={today}
+                                        min={today} // Tidak bisa pilih hari kemarin
+                                        max={maxDate} // Tidak bisa pilih lebih dari 2 bulan ke depan
                                         className="w-full rounded-lg border border-white/10 bg-[#16202d] p-3 transition-all outline-none focus:border-[#c5a059]"
                                         value={data.date}
                                         onChange={(e) =>
