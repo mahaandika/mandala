@@ -44,6 +44,9 @@ class HandleInertiaRequests extends Middleware
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $request->user(),
+               'cartCount' => $request->user() && $request->user()->pendingBooking 
+                            ? (int) $request->user()->pendingBooking->items()->sum('quantity') 
+                            : 0,
             ],
             'server_time' => now()->format('Y-m-d H:i:s'), // Ubah dari 'H:i' ke ini
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
