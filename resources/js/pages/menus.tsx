@@ -1,3 +1,4 @@
+import FooterClient from '@/components/footer-Client';
 import NavbarClient from '@/components/navbar-client';
 import PersonalizationModal from '@/components/PersonalizationModal';
 import { login } from '@/routes';
@@ -7,6 +8,7 @@ import {
     AlertCircle,
     CheckCircle2,
     Loader2,
+    LogIn, // <--- Ditambahkan
     Search,
     Settings2,
     X,
@@ -27,6 +29,7 @@ type Menu = {
 type Category = {
     id: number;
     name: string;
+    description?: string; // Opsional jika ada
 };
 
 type PaginationLink = {
@@ -87,6 +90,8 @@ export default function Menus() {
 
     // Modal & Personalization State
     const [showPersonalizeModal, setShowPersonalizeModal] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false); // <--- State baru untuk Modal Login
+
     const [selectedOptionIds, setSelectedOptionIds] = useState<number[]>(
         user_selected_ids || [],
     );
@@ -168,10 +173,12 @@ export default function Menus() {
     };
 
     const handleAddToCart = (menu: Menu) => {
+        // PERUBAHAN DI SINI: Cek login dulu, tampilkan modal jika belum login
         if (!auth?.user) {
-            router.visit(login());
+            setShowLoginModal(true);
             return;
         }
+
         router.post(
             '/carts/add',
             { menu_id: menu.id },
@@ -388,7 +395,55 @@ export default function Menus() {
                 </div>
             </section>
 
-            {/* --- MODALS --- */}
+            <FooterClient />
+
+            {/* --- MODAL KONFIRMASI LOGIN  */}
+            {showLoginModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+                        onClick={() => setShowLoginModal(false)}
+                    />
+
+                    {/* Modal Content */}
+                    <div className="relative w-full max-w-md animate-in overflow-hidden rounded-lg border border-[#9c6b3b]/30 bg-[#0a1219] p-8 text-center shadow-2xl duration-200 zoom-in-95 fade-in">
+                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#9c6b3b]/10">
+                            <LogIn className="text-[#9c6b3b]" size={32} />
+                        </div>
+
+                        <h3 className="mb-3 font-serif text-2xl tracking-wide text-white">
+                            Login Required
+                        </h3>
+
+                        <p className="mb-8 text-sm leading-relaxed font-light text-gray-400">
+                            To add{' '}
+                            <span className="font-medium text-white">
+                                items to your cart
+                            </span>{' '}
+                            and enjoy our exclusive features, please log in to
+                            your account first.
+                        </p>
+
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                            <button
+                                onClick={() => setShowLoginModal(false)}
+                                className="flex-1 rounded border border-white/10 py-3 text-xs tracking-widest text-white uppercase transition-colors hover:bg-white/5"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => router.visit(login())}
+                                className="flex-1 rounded bg-[#9c6b3b] py-3 text-xs tracking-widest text-white uppercase shadow-[0_0_15px_rgba(156,107,59,0.3)] transition-colors hover:bg-[#8a5d32]"
+                            >
+                                Login Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- MODALS EXISTING --- */}
             <PersonalizationModal
                 show={showPersonalizeModal}
                 loading={loadingPref}
