@@ -25,6 +25,7 @@ class BookingController extends Controller
             'booking_time' => Carbon::parse($booking->booking_time)->format('H:i'), //$booking->booking_time->format('H:i'),
 
             'status' => $booking->booking_status,
+            'payment_status' => $booking->payment_status,
 
             'tables' => $booking->tables->map(fn ($t) => [
                 'id' => $t->id,
