@@ -31,6 +31,19 @@ interface DashboardProps {
 }
 
 export default function Index() {
+    // state untuk toast
+    const [notification, setNotification] = useState<{
+        message: string;
+        type: 'success' | 'error';
+    } | null>(null);
+
+    // Efek untuk otomatis menutup toast dalam 3 detik
+    useEffect(() => {
+        if (notification) {
+            const timer = setTimeout(() => setNotification(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [notification]);
     const { flash } = usePage().props as any;
     const {
         tables,
@@ -66,6 +79,13 @@ export default function Index() {
     const [showScanner, setShowScanner] = useState(false);
     const scannerId = 'reader'; // ID element HTML untuk scanner
 
+    // --- Helper Function: Check Today ---
+    const isToday = () => {
+        const today = server_time ? new Date(server_time) : new Date();
+        const todayStr = format(today, 'yyyy-MM-dd');
+        return date === todayStr;
+    };
+
     // --- Effects ---
     useEffect(() => {
         if (flash?.success) {
@@ -75,7 +95,7 @@ export default function Index() {
         }
     }, [flash]);
 
-    // --- SCANNER LOGIC (UPDATED) ---
+    // --- SCANNER LOGIC ---
     useEffect(() => {
         let html5QrCode: Html5Qrcode | null = null;
 
@@ -108,10 +128,15 @@ export default function Index() {
                         // Error scanning (biasanya ignored karena scanning per frame)
                     },
                 )
+                // Di dalam catch start scanner
                 .catch((err) => {
                     console.error('Gagal memulai kamera', err);
                     setShowScanner(false);
-                    alert('Gagal memulai kamera. Pastikan izin diberikan.');
+                    setNotification({
+                        message:
+                            'Kamera tidak dapat diakses. Cek izin browser Anda.',
+                        type: 'error',
+                    });
                 });
         }
 
@@ -151,25 +176,31 @@ export default function Index() {
 
         router.post(
             '/admin/scan-checkin',
-            {
-                booking_code: bookingCode,
-            },
+            { booking_code: bookingCode },
             {
                 onSuccess: () => {
-                    alert('Success! Guest status is now SEATED');
+                    // GANTI ALERT KE TOAST
+                    setNotification({
+                        message: 'Check-in Berhasil! Status tamu kini SEATED.',
+                        type: 'success',
+                    });
                     setShowScanner(false);
                 },
                 onError: (errors) => {
-                    alert(
-                        Object.values(errors)[0] || 'Gagal melakukan check-in.',
-                    );
-                    // Jangan tutup scanner jika error, biar bisa scan ulang
+                    // GANTI ALERT KE TOAST
+                    setNotification({
+                        message:
+                            Object.values(errors)[0] ||
+                            'Gagal melakukan check-in.',
+                        type: 'error',
+                    });
+                    // Scanner tetap terbuka agar bisa coba lagi
                 },
             },
         );
     };
 
-    // --- TABLE LOGIC (TETAP SAMA) ---
+    // --- TABLE LOGIC ---
     const getTableAvailability = (table: Table) => {
         const now = server_time ? new Date(server_time) : new Date();
 
@@ -262,7 +293,11 @@ export default function Index() {
 
         if (isPickingTables) {
             if (status === 'occupied' || status === 'reserved_soon') {
-                alert('Meja ini sedang/akan dipakai. Tidak bisa digabungkan.');
+                setNotification({
+                    message:
+                        'Meja ini sedang/akan dipakai. Tidak bisa digabungkan.',
+                    type: 'error',
+                });
                 return;
             }
             const isSelected = selectedWalkInTables.find(
@@ -288,6 +323,15 @@ export default function Index() {
             setSelectedTableForDetail(table);
             openBookingModal(sortedReservations[0].booking_id);
         } else {
+            // CHECK DATE BEFORE OPENING WALK-IN
+            if (!isToday()) {
+                setNotification({
+                    message: 'Walk-in hanya dapat dilakukan pada hari ini.',
+                    type: 'error',
+                });
+                return;
+            }
+
             setGapTimeLimit(null);
             setSelectedWalkInTables([table]);
             setWalkInPax(table.capacity);
@@ -304,6 +348,14 @@ export default function Index() {
     };
 
     const handleTransitionToWalkIn = (lastBooking: BookingDetail) => {
+        // CHECK DATE BEFORE CONVERSION
+        if (!isToday()) {
+            alert(
+                'Konversi ke Walk-In hanya dapat dilakukan pada tanggal hari ini.',
+            );
+            return;
+        }
+
         let targetTables: Table[] = [];
         if (selectedTableForDetail) {
             const foundTable = tables.find(
@@ -387,6 +439,13 @@ export default function Index() {
                         {isPickingTables ? (
                             <Button
                                 onClick={() => {
+                                    // CHECK DATE ON FINISH PICKING
+                                    if (!isToday()) {
+                                        alert(
+                                            'Walk-In hanya dapat dilakukan pada tanggal hari ini.',
+                                        );
+                                        return;
+                                    }
                                     setIsPickingTables(false);
                                     setShowWalkInModal(true);
                                 }}
@@ -532,6 +591,60 @@ export default function Index() {
                     </div>
                 )}
             </div>
+
+            {/* Custom Toast Notification - Floating at Top & Responsive */}
+            {notification && (
+                <div className="fixed top-6 left-1/2 z-[300] w-full -translate-x-1/2 animate-in px-4 slide-in-from-top-5 fade-in md:max-w-md">
+                    <div
+                        className={`flex items-center justify-between gap-3 rounded-2xl border px-5 py-4 shadow-2xl backdrop-blur-sm ${
+                            notification.type === 'success'
+                                ? 'border-emerald-400/50 bg-emerald-600/95 text-white'
+                                : 'border-red-400/50 bg-red-600/95 text-white'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            {notification.type === 'success' ? (
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20">
+                                    <svg
+                                        className="h-5 w-5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={3}
+                                            d="M5 13l4 4L19 7"
+                                        />
+                                    </svg>
+                                </div>
+                            ) : (
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20">
+                                    <span className="text-lg font-bold">!</span>
+                                </div>
+                            )}
+                            <div className="flex flex-col">
+                                <p className="text-sm leading-tight font-bold tracking-wide">
+                                    {notification.type === 'success'
+                                        ? 'Berhasil'
+                                        : 'Terjadi Kesalahan'}
+                                </p>
+                                <p className="line-clamp-2 text-xs opacity-90">
+                                    {notification.message}
+                                </p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setNotification(null)}
+                            className="ml-2 shrink-0 rounded-lg p-1 transition-colors hover:bg-white/10"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }
