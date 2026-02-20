@@ -60,4 +60,9 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(PersonalizationOption::class, 'user_personalizations')
                     ->withTimestamps();
     }
+
+    public function pendingBooking()
+    {
+        return $this->hasOne(Booking::class)->where('booking_status', 'pending')->latest();
+    }
 }
