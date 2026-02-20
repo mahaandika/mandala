@@ -207,7 +207,7 @@ export default function History({ bookings, filters }: Props) {
 
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                             {/* Input From Date */}
-                            <div className="relative">
+                            {/* <div className="relative">
                                 <Calendar
                                     size={14}
                                     className="absolute top-1/2 left-3 -translate-y-1/2 text-[#c5a059]"
@@ -223,10 +223,10 @@ export default function History({ bookings, filters }: Props) {
                                     }
                                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pr-3 pl-9 text-[12px] text-gray-300 [color-scheme:dark] focus:border-[#c5a059]/50 focus:outline-none"
                                 />
-                            </div>
+                            </div> */}
 
                             {/* Input To Date */}
-                            <div className="relative">
+                            {/* <div className="relative">
                                 <Calendar
                                     size={14}
                                     className="absolute top-1/2 left-3 -translate-y-1/2 text-[#c5a059]"
@@ -242,7 +242,7 @@ export default function History({ bookings, filters }: Props) {
                                     }
                                     className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pr-3 pl-9 text-[12px] text-gray-300 [color-scheme:dark] focus:border-[#c5a059]/50 focus:outline-none"
                                 />
-                            </div>
+                            </div> */}
 
                             {/* Select Status */}
                             <div className="relative">
