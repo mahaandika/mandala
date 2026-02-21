@@ -13,7 +13,9 @@ class CartsController extends Controller
 {
     public function showCart()
     {
-        $booking = Booking::with(['user', 'tables', 'items.menu'])
+        $booking = Booking::with(['user', 'tables', 'items.menu' => function($query) {
+        $query->withTrashed(); // Menarik data menu meskipun sudah dihapus (soft delete)
+    }])
         ->where('user_id', Auth::user()->id)
         ->where('booking_status', 'pending')
         ->first();
@@ -27,48 +29,45 @@ class CartsController extends Controller
     if ($booking) {
         $tableIds = $booking->tables->pluck('id');
         // Pastikan format date & time digabung untuk perbandingan objek Carbon
-        $myTime = \Carbon\Carbon::parse($booking->booking_date->format('Y-m-d') . ' ' . $booking->booking_time);
+        $bookingDateTime = \Carbon\Carbon::parse($booking->booking_date->format('Y-m-d') . ' ' . $booking->booking_time);
 
-        // Cari booking orang lain di meja yang sama
-        $conflictingBookings = Booking::whereHas('tables', function ($q) use ($tableIds) {
-                // Gunakan ID dari restaurant_tables
-                $q->whereIn('restaurant_tables.id', $tableIds);
-            })
-            ->where('id', '!=', $booking->id)
-            ->whereDate('booking_date', $booking->booking_date)
-            ->whereIn('booking_status', ['reserve', 'seated'])
-            ->with('tables')
-            ->get();
+        if ($bookingDateTime->isPast()) {
+            $validation['errors'][] = "Waktu reservasi (" . $bookingDateTime->format('H:i') . ") sudah terlewat. Silakan batalkan dan buat reservasi baru dengan waktu yang tersedia.";
+            $validation['can_checkout'] = false;
+        }
 
+        if ($validation['can_checkout']) {
+            $conflictingBookings = Booking::whereHas('tables', function ($q) use ($tableIds) {
+                    $q->whereIn('restaurant_tables.id', $tableIds);
+                })
+                ->where('id', '!=', $booking->id)
+                ->whereDate('booking_date', $booking->booking_date)
+                ->whereIn('booking_status', ['reserve', 'seated'])
+                ->with('tables')
+                ->get();
 
             foreach ($booking->tables as $table) {
                 foreach ($conflictingBookings as $conflict) {
                     if ($conflict->tables->contains('id', $table->id)) {
                         $otherTime = \Carbon\Carbon::parse($conflict->booking_date->format('Y-m-d') . ' ' . $conflict->booking_time);
-                        
-                        // Selisih dalam menit (Positif jika booking kita SETELAH orang lain, Negatif jika SEBELUM)
-                        $diffInMinutes = $otherTime->diffInMinutes($myTime, false);
+                        $diffInMinutes = $otherTime->diffInMinutes($bookingDateTime, false);
 
-                        if ($myTime->gt($otherTime)) {
-                            // KONDISI: Jam kita DIATAS jam mereka (Kita datang belakangan tapi mereka belum selesai)
-                            $validation['errors'][] = "Meja {$table->table_number} masih ada booking jam " . $otherTime->format('H:i') . " (Status: {$conflict->booking_status}). Tunggu hingga selesai.";
+                        if ($bookingDateTime->gt($otherTime)) {
+                            $validation['errors'][] = "Meja {$table->table_number} masih ada booking jam " . $otherTime->format('H:i') . ".";
                             $validation['can_checkout'] = false;
                         } else {
-                            // KONDISI: Jam kita DIBAWAH jam mereka (Kita datang duluan)
                             $absDiff = abs($diffInMinutes);
-
                             if ($absDiff <= 30) {
-                                // Jika mepet 30 menit atau kurang
-                                $validation['errors'][] = "Meja {$table->table_number} tidak dapat dibooking karena mepet 30 menit dengan booking lain jam " . $otherTime->format('H:i') . ".";
+                                $validation['errors'][] = "Meja {$table->table_number} terlalu mepet dengan booking lain (jam " . $otherTime->format('H:i') . ").";
                                 $validation['can_checkout'] = false;
                             } else {
-                                // Jika masih boleh (di atas 30 menit sebelum orang lain datang) tapi kasih warning
-                                $validation['warnings'][] = "Peringatan: Meja {$table->table_number} sudah di-reserve orang lain jam " . $otherTime->format('H:i') . ". Pastikan Anda selesai sebelum jam tersebut.";
+                                $validation['warnings'][] = "Peringatan: Meja {$table->table_number} sudah di-reserve orang lain jam " . $otherTime->format('H:i') . ".";
                             }
                         }
                     }
                 }
             }
+        }
         }
 
             return Inertia::render('carts', [
@@ -83,13 +82,17 @@ class CartsController extends Controller
         'booking_time' => $booking->booking_time,
         'user' => $booking->user,
         'tables' => $booking->tables,
+        // Di dalam CartsController.php fungsi showCart()
         'menus' => $booking->items->map(function ($item) {
+            // Pastikan relasi menu ditarik dengan withTrashed() di query utamanya
             return [
                 'id' => $item->id, 
                 'menu_id' => $item->menu_id,
-                'name' => $item->menu->name ?? 'Menu deleted',
+                'name' => $item->menu->name ?? 'Menu tidak ditemukan', // Nama asli akan muncul
                 'price' => (int) $item->unit_price,
                 'qty' => $item->quantity,
+                // Flag untuk mengecek apakah menu masih aktif atau sudah di-soft delete
+                'is_available' => $item->menu && !$item->menu->trashed(), 
             ];
         }),
         'validation' => $validation
