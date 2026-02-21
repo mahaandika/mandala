@@ -12,7 +12,11 @@ class InvoiceController extends Controller
 
     public function downloadInvoice(Booking $booking)
     {
-        $booking->load(['items.menu', 'user', 'tables', 'walkInPayments']);
+        $booking->load(['items.menu' 
+                         => function ($query) {
+                        $query->withTrashed();
+                        }, 
+                        'user', 'tables', 'walkInPayments']);
 
         // 1. Pisahkan item berdasarkan TYPE (BENAR)
         $onlineItems = $booking->items->where('type', 'online');
