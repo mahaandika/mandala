@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 
-import AppearanceTabs from '@/components/appearance-tabs';
+// import AppearanceTabs from '@/components/appearance-tabs';
 import HeadingSmall from '@/components/heading-small';
 import { type BreadcrumbItem } from '@/types';
 
@@ -26,7 +26,7 @@ export default function Appearance() {
                         title="Appearance settings"
                         description="Update your account's appearance settings"
                     />
-                    <AppearanceTabs />
+                    {/* <AppearanceTabs /> */}
                 </div>
             </SettingsLayout>
         </AppLayout>
