@@ -194,7 +194,7 @@ class PaymentController extends Controller
         $user = Auth::user();
         
         // Pastikan booking ini milik user yang login
-        if ($booking->user_id !== $user->id) {
+        if ($booking->user_id != $user->id) {
             abort(403);
         }
 
