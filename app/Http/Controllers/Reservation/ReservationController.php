@@ -232,7 +232,7 @@ class ReservationController extends Controller
     $reservationStartTime = \Carbon\Carbon::parse($dateString . ' ' . $booking->booking_time);
     
     // Batas Keterlambatan: 15 Menit + 1 Menit (Toleransi) = 16 Menit
-    $expirationTime = $reservationStartTime->copy()->addMinutes(1);
+    $expirationTime = $reservationStartTime->copy()->addMinutes(15);
     
     // Waktu Sekarang
     $now = \Carbon\Carbon::now();
