@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Admin\CategoryRequest;
 use App\Models\Category;
+use App\Models\Menu;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -57,24 +58,27 @@ class CategoriesController extends Controller
     }
 
     public function update(CategoryRequest $request, Category $category){
-        $valid = $request->validated();
+            $valid = $request->validated();
 
-        $category->update($valid);
+            $category->update($valid);
 
-        return redirect()->route('admin.categories.index')->with('success', [
-    'type' => 'update',
-    'message' => 'Category has been updated successfully.'
-]);
+            return redirect()->route('admin.categories.index')->with('success', [
+        'type' => 'update',
+        'message' => 'Category has been updated successfully.'
+    ]);
     }
 
     public function destroy(Category $category)
-{
-    $category->delete();
-
-    // Menggunakan back() akan mengarahkan user kembali ke URL terakhir (termasuk query string page)
-    return redirect()->back()->with('success', [
-    'type' => 'delete',
-    'message' => 'Category has been deleted successfully.'
-]);
+    {
+        $menu = Menu::where('category_id', $category->id)->get();
+        foreach ($menu as $item) {
+            $item->delete();
+        }
+        $category->delete();
+        // Menggunakan back() akan mengarahkan user kembali ke URL terakhir (termasuk query string page)
+        return redirect()->back()->with('success', [
+        'type' => 'delete',
+        'message' => 'Category has been deleted successfully.'
+    ]);
 }
 }
