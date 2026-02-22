@@ -110,7 +110,7 @@ export default function Reservations({
     // Hitung total kapasitas dari meja yang dipilih
     const currentTotalCapacity = tables
         .filter((t) => data.table_ids.includes(t.id.toString()))
-        .reduce((acc, curr) => acc + curr.capacity, 0);
+        .reduce((acc, curr) => Number(acc + curr.capacity), 0);
 
     // Fungsi untuk filter tanggal (Reload data dari backend)
     const handleDateChange = (newDate: string) => {
