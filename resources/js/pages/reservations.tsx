@@ -218,8 +218,7 @@ export default function Reservations({
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-
-        // 1. VALIDASI FIELD KOSONG (Pengganti 'required' HTML5)
+        setError('phone', '');
         if (!data.name || !data.phone || !data.date || !data.time) {
             setNotification({
                 message:
@@ -227,14 +226,12 @@ export default function Reservations({
                 type: 'error',
             });
             return;
-        }
-
-        if (data.phone && !isValidPhoneNumber(data.phone)) {
-            setError(
-                'phone',
-                'Nomor telepon tidak valid untuk negara yang dipilih',
-            );
-            return; // Berhenti di sini jika tidak valid
+        } else if (!isValidPhoneNumber(data.phone)) {
+            setNotification({
+                message: 'Mohon masukkan nomor telepon yang valid',
+                type: 'error',
+            });
+            return;
         }
 
         const now = new Date();
