@@ -199,7 +199,11 @@ class PaymentController extends Controller
         }
 
         // Load relasi agar data menu tersedia
-        $booking->load(['items.menu', 'user', 'tables']);
+        $booking->load(['items.menu' => function ($query) {
+                        $query->withTrashed();
+                        }, 
+                        'user', 'tables']);
+
 
         if ($booking->payment_status !== 'success') {
             return redirect()->route('historys', ['status' => 'unpaid']);
