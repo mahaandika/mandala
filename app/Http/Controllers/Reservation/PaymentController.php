@@ -202,7 +202,7 @@ class PaymentController extends Controller
         $booking->load(['items.menu', 'user', 'tables']);
 
         if ($booking->payment_status !== 'success') {
-            return redirect()->route('dashboard');
+            return redirect()->route('historys', ['status' => 'unpaid']);
         }
 
         return Inertia::render('payment-finish', [
