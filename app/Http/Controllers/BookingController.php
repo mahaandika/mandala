@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
@@ -22,7 +21,7 @@ class BookingController extends Controller
             'customer_phone' => $booking->user->phone,
 
             'booking_date' => $booking->booking_date->toDateString(),
-            'booking_time' => Carbon::parse($booking->booking_time)->format('H:i'), //$booking->booking_time->format('H:i'),
+            'booking_time' => Carbon::parse($booking->booking_time)->format('H:i'), // $booking->booking_time->format('H:i'),
 
             'status' => $booking->booking_status,
             'payment_status' => $booking->payment_status,
@@ -40,7 +39,7 @@ class BookingController extends Controller
                 'price' => $item->formatted_price,
                 'subtotal' => $item->formatted_subtotal,
                 'type' => $item->type,
-                ]),
+            ]),
 
             'total_price' => $booking->items->sum(fn ($i) => $i->subtotal),
 

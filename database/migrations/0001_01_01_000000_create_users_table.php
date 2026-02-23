@@ -21,7 +21,7 @@ return new class extends Migration
             $table->enum('role', [
                 Role::ADMIN->value,
                 Role::RECEPTIONIST->value,
-                Role::CUSTOMER->value
+                Role::CUSTOMER->value,
             ])->default('customer');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

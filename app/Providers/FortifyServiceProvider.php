@@ -28,32 +28,34 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-    // Kustomisasi Redirect Setelah LOGIN
+        // Kustomisasi Redirect Setelah LOGIN
         $this->app->singleton(LoginResponse::class, function () {
-            return new class implements LoginResponse {
+            return new class implements LoginResponse
+            {
                 public function toResponse($request)
                 {
                     // Logika pengecekan role
 
+                    $url = match ($request->user()->role) {
+                        Role::ADMIN->value,
+                        Role::RECEPTIONIST->value => '/admin/dashboard',
+                        default => '/',
+                    };
 
-$url = match ($request->user()->role) {
-    Role::ADMIN->value,
-    Role::RECEPTIONIST->value => '/admin/dashboard',
-    default => '/',
-};
-
-return redirect()->intended($url);
+                    return redirect()->intended($url);
 
                 }
             };
         });
         $this->app->singleton(RegisterResponse::class, function () {
-            return new class implements RegisterResponse {
-                public function toResponse($request) {
+            return new class implements RegisterResponse
+            {
+                public function toResponse($request)
+                {
                     Auth::logout();
                     // Ambil user yang baru saja dibuat (user terakhir yang registrasi di sesi ini)
-                    $user = \App\Models\User::latest()->first(); 
-                    
+                    $user = \App\Models\User::latest()->first();
+
                     return redirect()->route('verification.notice.unauthenticated', [
                         'id' => $user->id,
                         'hash' => sha1($user->getEmailForVerification()),
@@ -63,13 +65,14 @@ return redirect()->intended($url);
         });
 
         // Kustomisasi Redirect Setelah LOGOUT (Opsional)
-        $this->app->instance(LogoutResponse::class, new class implements LogoutResponse {
+        $this->app->instance(LogoutResponse::class, new class implements LogoutResponse
+        {
             public function toResponse($request)
             {
                 return redirect('/');
             }
         });
-        }
+    }
 
     /**
      * Bootstrap any application services.
@@ -84,7 +87,7 @@ return redirect()->intended($url);
             $user = \App\Models\User::where('email', $request->email)->first();
 
             if ($user && Hash::check($request->password, $user->password)) {
-                if (!$user->hasVerifiedEmail()) {
+                if (! $user->hasVerifiedEmail()) {
                     // Kita lempar error khusus beserta data ID dan Hash
                     throw ValidationException::withMessages([
                         'email' => ['Email belum diverifikasi.'],
@@ -93,6 +96,7 @@ return redirect()->intended($url);
                         'verification_hash' => sha1($user->getEmailForVerification()),
                     ]);
                 }
+
                 return $user;
             }
         });

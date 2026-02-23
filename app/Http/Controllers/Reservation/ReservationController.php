@@ -11,7 +11,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class ReservationController extends Controller
@@ -37,11 +36,11 @@ class ReservationController extends Controller
                 // Gunakan [] agar data di-push, bukan menimpa yang lama
                 $tableBookings[$table->id][] = [
                     'booking_id' => $booking->id,
-                    'customer'   => $booking->user->name,
-                    'phone'      => $booking->user->phone,
-                    'status'     => $booking->booking_status,
-                    'time'       => $booking->booking_time,
-                    'pax'        => $booking->total_people,
+                    'customer' => $booking->user->name,
+                    'phone' => $booking->user->phone,
+                    'status' => $booking->booking_status,
+                    'time' => $booking->booking_time,
+                    'pax' => $booking->total_people,
                 ];
             }
         }
@@ -53,24 +52,24 @@ class ReservationController extends Controller
             ->map(function ($table) use ($tableBookings) {
                 // 2. Ambil semua list booking untuk meja ini (default array kosong)
                 $reservations = $tableBookings[$table->id] ?? [];
-                
+
                 return [
-                    'id'          => $table->id,
-                    'name'        => $table->table_name,
-                    'capacity'    => $table->capacity,
-                    'position'    => $table->position,
+                    'id' => $table->id,
+                    'name' => $table->table_name,
+                    'capacity' => $table->capacity,
+                    'position' => $table->position,
                     // Jika array tidak kosong, berarti 'reserved'
-                    'status'      => count($reservations) > 0 ? 'reserved' : 'available',
+                    'status' => count($reservations) > 0 ? 'reserved' : 'available',
                     // 3. Kirimkan semua daftar reservasi (Array)
                     'reservations' => $reservations,
                 ];
             });
 
         return Inertia::render('reservations', [
-            'tables'    => $tables,
-            'date'      => $date,
+            'tables' => $tables,
+            'date' => $date,
             'auth_user' => [
-                'name'  => $user->name ?? '',
+                'name' => $user->name ?? '',
                 'email' => $user->email ?? '',
                 'phone' => $user->phone ?? '',
             ],
@@ -80,8 +79,8 @@ class ReservationController extends Controller
     public function storeReservation(Request $request)
     {
         $now = Carbon::now();
-        $minTime = "11:00";
-        $maxTime = "22:00";
+        $minTime = '11:00';
+        $maxTime = '22:00';
         $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'required|string',
@@ -134,37 +133,36 @@ class ReservationController extends Controller
         $existingBooking = Booking::where('user_id', $user->id)
             ->where('booking_status', 'pending')
             ->first();
-        $userTime = $request->time; 
-        // 4. Validasi Ketersediaan Meja 
-       $isBooked = DB::table('booking_tables')
-                ->join('bookings', 'bookings.id', '=', 'booking_tables.booking_id')
-                ->whereIn('booking_tables.restaurant_table_id', $request->table_ids)
-                ->whereDate('bookings.booking_date', $request->date)
-                ->whereIn('bookings.booking_status', ['reserve', 'seated'])
+        $userTime = $request->time;
+        // 4. Validasi Ketersediaan Meja
+        $isBooked = DB::table('booking_tables')
+            ->join('bookings', 'bookings.id', '=', 'booking_tables.booking_id')
+            ->whereIn('booking_tables.restaurant_table_id', $request->table_ids)
+            ->whereDate('bookings.booking_date', $request->date)
+            ->whereIn('bookings.booking_status', ['reserve', 'seated'])
 
-                // ❌ userTime >= booking_time - 30 menit  → TIDAK BOLEH
-                ->whereRaw("
+                 // ❌ userTime >= booking_time - 30 menit  → TIDAK BOLEH
+            ->whereRaw('
                     TIME_TO_SEC(?) >= TIME_TO_SEC(bookings.booking_time) - (30 * 60)
-                ", [$userTime])
+                ', [$userTime])
 
-                // abaikan booking sendiri saat update
-                ->when($existingBooking, function ($query) use ($existingBooking) {
-                    return $query->where('bookings.id', '!=', $existingBooking->id);
-                })
-                ->exists();
-
+                 // abaikan booking sendiri saat update
+            ->when($existingBooking, function ($query) use ($existingBooking) {
+                return $query->where('bookings.id', '!=', $existingBooking->id);
+            })
+            ->exists();
 
         if ($isBooked) {
-            return back()->withErrors(['table_ids' => "Salah satu meja sudah dipesan orang lain pada tanggal tersebut."]);
+            return back()->withErrors(['table_ids' => 'Salah satu meja sudah dipesan orang lain pada tanggal tersebut.']);
         }
 
         try {
             DB::beginTransaction();
-            
+
             // Update Profile User
             $user->update([
                 'name' => $request->name,
-                'phone' => $request->phone
+                'phone' => $request->phone,
             ]);
 
             if ($existingBooking) {
@@ -174,7 +172,7 @@ class ReservationController extends Controller
                     'booking_date' => $request->date,
                     'booking_time' => $request->time,
                 ]);
-                
+
                 // Hapus relasi meja lama (detach) agar bisa diganti yang baru
                 $existingBooking->tables()->sync($request->table_ids);
                 $booking = $existingBooking;
@@ -189,7 +187,7 @@ class ReservationController extends Controller
                     'booking_status' => 'pending',
                     'total_price' => 0,
                 ]);
-                
+
                 $booking->tables()->attach($request->table_ids);
                 $msg = 'Meja berhasil ditambahkan ke keranjang.';
             }
@@ -201,72 +199,73 @@ class ReservationController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Terjadi kesalahan: '.$e->getMessage()]);
         }
     }
 
     public function checkIn(Request $request)
-{
-    $request->validate([
-        'booking_code' => 'required|exists:bookings,booking_code',
-    ]);
+    {
+        $request->validate([
+            'booking_code' => 'required|exists:bookings,booking_code',
+        ]);
 
-    $booking = Booking::where('booking_code', $request->booking_code)->first();
+        $booking = Booking::where('booking_code', $request->booking_code)->first();
 
-    // 1. Validasi jika sudah discan sebelumnya
-    if ($booking->qr_scanned) {
-        return back()->withErrors(['message' => 'QR Code ini sudah pernah discan pada ' . $booking->checkin_time]);
-    }
+        // 1. Validasi jika sudah discan sebelumnya
+        if ($booking->qr_scanned) {
+            return back()->withErrors(['message' => 'QR Code ini sudah pernah discan pada '.$booking->checkin_time]);
+        }
 
-    // 2. Validasi status pembayaran
-    if ($booking->payment_status !== 'success') {
-        return back()->withErrors(['message' => 'Gagal: Pembayaran belum diselesaikan.']);
-    }
-    
-    // Pastikan booking_date dikonversi ke string
-    $dateString = $booking->booking_date instanceof \Carbon\Carbon 
-        ? $booking->booking_date->format('Y-m-d') 
-        : $booking->booking_date;
+        // 2. Validasi status pembayaran
+        if ($booking->payment_status !== 'success') {
+            return back()->withErrors(['message' => 'Gagal: Pembayaran belum diselesaikan.']);
+        }
 
-    // Waktu Reservasi asli
-    $reservationStartTime = \Carbon\Carbon::parse($dateString . ' ' . $booking->booking_time);
-    
-    // Batas Keterlambatan: 15 Menit + 1 Menit (Toleransi) = 16 Menit
-    $expirationTime = $reservationStartTime->copy()->addMinutes(15);
-    
-    // Waktu Sekarang
-    $now = \Carbon\Carbon::now();
+        // Pastikan booking_date dikonversi ke string
+        $dateString = $booking->booking_date instanceof \Carbon\Carbon
+            ? $booking->booking_date->format('Y-m-d')
+            : $booking->booking_date;
 
-    // --- LOGIKA BARU: CEK KADALUARSA (NO SHOW) ---
-    if ($now->gt($expirationTime)) {
-        // Update status secara otomatis menjadi no_show karena telat
+        // Waktu Reservasi asli
+        $reservationStartTime = \Carbon\Carbon::parse($dateString.' '.$booking->booking_time);
+
+        // Batas Keterlambatan: 15 Menit + 1 Menit (Toleransi) = 16 Menit
+        $expirationTime = $reservationStartTime->copy()->addMinutes(15);
+
+        // Waktu Sekarang
+        $now = \Carbon\Carbon::now();
+
+        // --- LOGIKA BARU: CEK KADALUARSA (NO SHOW) ---
+        if ($now->gt($expirationTime)) {
+            // Update status secara otomatis menjadi no_show karena telat
+            $booking->update([
+                'booking_status' => 'no_show',
+            ]);
+
+            return back()->withErrors([
+                'message' => 'Gagal: QR Code Kadaluarsa. Batas check-in (15 menit) telah terlewati.',
+            ]);
+        }
+
+        // --- CEK APAKAH TERLALU CEPAT ---
+        if ($now->lt($reservationStartTime->subMinutes(5))) {
+            return back()->withErrors([
+                'message' => 'Gagal: Belum waktunya Check-in. Reservasi dijadwalkan pada jam '.$reservationStartTime->format('H:i'),
+            ]);
+        }
+
+        // 3. Update data jika validasi lolos (Tepat Waktu)
         $booking->update([
-            'booking_status' => 'no_show',
+            'booking_status' => 'seated',
+            'qr_scanned' => true,
+            'checkin_time' => $now,
         ]);
 
-        return back()->withErrors([
-            'message' => 'Gagal: QR Code Kadaluarsa. Batas check-in (15 menit) telah terlewati.'
-        ]);
+        return back()->with('success', 'Tamu berhasil Check-in. Silahkan arahkan ke meja.');
     }
 
-    // --- CEK APAKAH TERLALU CEPAT ---
-    if ($now->lt($reservationStartTime->subMinutes(5))) {
-        return back()->withErrors([
-            'message' => 'Gagal: Belum waktunya Check-in. Reservasi dijadwalkan pada jam ' . $reservationStartTime->format('H:i')
-        ]);
-    }
-
-    // 3. Update data jika validasi lolos (Tepat Waktu)
-    $booking->update([
-        'booking_status' => 'seated',
-        'qr_scanned'     => true,
-        'checkin_time'   => $now,
-    ]);
-
-    return back()->with('success', 'Tamu berhasil Check-in. Silahkan arahkan ke meja.');
-}
-
-   public function walkInReservation(Request $request)
+    public function walkInReservation(Request $request)
     {
         $request->validate([
             'table_ids' => 'required|array|min:1', // Array ID meja
@@ -297,7 +296,7 @@ class ReservationController extends Controller
             $totalMenuPrice = 0;
             $bookingItemsData = [];
 
-            if (!empty($request->items)) {
+            if (! empty($request->items)) {
                 foreach ($request->items as $item) {
                     $menu = Menu::find($item['id']);
                     $subtotal = $menu->price * $item['quantity'];
@@ -319,7 +318,7 @@ class ReservationController extends Controller
                 'booking_time' => now()->format('H:i'),
                 'total_people' => $request->total_people,
                 'booking_status' => 'seated',
-                'payment_status' => 'success', 
+                'payment_status' => 'success',
                 'qr_scanned' => true,
                 'checkin_time' => now(),
                 'total_price' => $totalMenuPrice,
@@ -342,11 +341,12 @@ class ReservationController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Walk-In berhasil disimpan untuk ' . count($request->table_ids) . ' meja.');
+            return back()->with('success', 'Walk-In berhasil disimpan untuk '.count($request->table_ids).' meja.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['message' => 'Gagal: ' . $e->getMessage()]);
+
+            return back()->withErrors(['message' => 'Gagal: '.$e->getMessage()]);
         }
     }
 
@@ -361,7 +361,7 @@ class ReservationController extends Controller
 
         try {
             DB::transaction(function () use ($request, $booking) {
-                
+
                 foreach ($request->items as $itemData) {
                     // Ambil data menu master untuk mendapatkan harga saat ini
                     $menuMaster = Menu::findOrFail($itemData['id']);
@@ -377,15 +377,15 @@ class ReservationController extends Controller
                     if ($existingItem) {
                         // SKENARIO A: Menu sudah ada, update quantity
                         $newQuantity = $existingItem->quantity + $qtyToAdd;
-                        
+
                         // Hitung subtotal baru (Harga Satuan yg tersimpan * Quantity Baru)
-                        // Note: Kita pakai unit_price yang sudah tersimpan untuk konsistensi, 
+                        // Note: Kita pakai unit_price yang sudah tersimpan untuk konsistensi,
                         // atau pakai $menuMaster->price jika ingin mengikuti harga terbaru.
                         $newSubtotal = $newQuantity * $existingItem->unit_price;
 
                         $existingItem->update([
                             'quantity' => $newQuantity,
-                            'subtotal' => $newSubtotal
+                            'subtotal' => $newSubtotal,
                         ]);
 
                     } else {
@@ -416,7 +416,7 @@ class ReservationController extends Controller
 
         } catch (\Exception $e) {
             // Log error jika perlu: \Log::error($e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan: '.$e->getMessage());
         }
     }
 }

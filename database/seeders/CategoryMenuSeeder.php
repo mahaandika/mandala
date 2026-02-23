@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Category;
 use App\Models\Menu;
 use App\Models\PersonalizationOption;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class CategoryMenuSeeder extends Seeder
@@ -15,26 +15,25 @@ class CategoryMenuSeeder extends Seeder
         /* =======================
            CATEGORIES
         ========================*/
-        foreach (['foods','drinks','dessert'] as $cat) {
+        foreach (['foods', 'drinks', 'dessert'] as $cat) {
             Category::firstOrCreate(
                 ['name' => $cat],
                 ['is_active' => true]
             );
         }
 
-        $foods   = Category::where('name','foods')->first()->id;
-        $drinks  = Category::where('name','drinks')->first()->id;
-        $dessert = Category::where('name','dessert')->first()->id;
+        $foods = Category::where('name', 'foods')->first()->id;
+        $drinks = Category::where('name', 'drinks')->first()->id;
+        $dessert = Category::where('name', 'dessert')->first()->id;
 
         /* =======================
            HELPER
         ========================*/
         $getOptionIds = function (string $type, array|string $names) {
-            return PersonalizationOption::whereHas('personalizationType', fn ($q) =>
-                $q->where('name', $type)
+            return PersonalizationOption::whereHas('personalizationType', fn ($q) => $q->where('name', $type)
             )->whereIn('name', (array) $names)
-             ->pluck('id')
-             ->toArray();
+                ->pluck('id')
+                ->toArray();
         };
 
         /* =========================================================
@@ -52,8 +51,8 @@ class CategoryMenuSeeder extends Seeder
         $this->attach($menu->id, array_merge(
             $getOptionIds('Spiciness Level', 'No Spicy'),
             $getOptionIds('Dietary Preferences', 'vegetarian'),
-            $getOptionIds('Flavor Preferences', ['fresh','savory','sweet']),
-            $getOptionIds('Allergens to Avoid', ['eggs','dairy','nuts','soy'])
+            $getOptionIds('Flavor Preferences', ['fresh', 'savory', 'sweet']),
+            $getOptionIds('Allergens to Avoid', ['eggs', 'dairy', 'nuts', 'soy'])
         ));
 
         /* =========================================================
@@ -88,7 +87,7 @@ class CategoryMenuSeeder extends Seeder
 
         $this->attach($menu->id, array_merge(
             $getOptionIds('Spiciness Level', 'No Spicy'),
-            $getOptionIds('Dietary Preferences', ['vegetarian','vegan']),
+            $getOptionIds('Dietary Preferences', ['vegetarian', 'vegan']),
             $getOptionIds('Flavor Preferences', 'smoky')
         ));
 
@@ -107,7 +106,7 @@ class CategoryMenuSeeder extends Seeder
         $this->attach($menu->id, array_merge(
             $getOptionIds('Spiciness Level', 'No Spicy'),
             $getOptionIds('Dietary Preferences', 'dairy-free'),
-            $getOptionIds('Flavor Preferences', ['sweet','fresh','creamy']),
+            $getOptionIds('Flavor Preferences', ['sweet', 'fresh', 'creamy']),
             $getOptionIds('Allergens to Avoid', 'dairy')
         ));
 
@@ -125,8 +124,8 @@ class CategoryMenuSeeder extends Seeder
 
         $this->attach($menu->id, array_merge(
             $getOptionIds('Spiciness Level', 'Medium Spicy'),
-            $getOptionIds('Flavor Preferences', ['fresh','smoky','savory']),
-            $getOptionIds('Allergens to Avoid', ['dairy','eggs'])
+            $getOptionIds('Flavor Preferences', ['fresh', 'smoky', 'savory']),
+            $getOptionIds('Allergens to Avoid', ['dairy', 'eggs'])
         ));
 
         // ... Lanjutkan untuk menu lainnya dengan mengganti '0' menjadi 'No Spicy'

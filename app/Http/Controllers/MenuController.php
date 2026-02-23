@@ -20,7 +20,7 @@ class MenuController extends Controller
 
         // SEARCH
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%'.$request->search.'%');
         }
 
         // STATUS FILTER
@@ -48,18 +48,20 @@ class MenuController extends Controller
         ]);
     }
 
-
-    public function create(){
+    public function create()
+    {
         $categories = Category::where('is_active', true)->get();
+
         return Inertia::render('admin/menu/create', ['categories' => $categories]);
     }
 
-    public function store(MenusRequest $request){
+    public function store(MenusRequest $request)
+    {
         $valid = $request->validated();
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $filename = time() . '_menu.' . $image->getClientOriginalExtension();
+            $filename = time().'_menu.'.$image->getClientOriginalExtension();
 
             $image->storeAs('menus', $filename, 'public');
 
@@ -70,12 +72,14 @@ class MenuController extends Controller
 
         return redirect()->route('admin.menu.index')->with('success', [
             'type' => 'create',
-            'message' => 'Menu created successfuly.'
+            'message' => 'Menu created successfuly.',
         ]);
     }
 
-    public function edit(Menu $menu){
+    public function edit(Menu $menu)
+    {
         $categories = Category::where('is_active', true)->get();
+
         return Inertia::render('admin/menu/edit', ['menu' => $menu, 'categories' => $categories]);
     }
 
@@ -85,14 +89,14 @@ class MenuController extends Controller
 
         if ($request->hasFile('image')) {
             if ($menu->image) {
-                $path = 'menus/' . $menu->image;
+                $path = 'menus/'.$menu->image;
                 if (Storage::disk('public')->exists($path)) {
                     Storage::disk('public')->delete($path);
                 }
             }
 
             $image = $request->file('image');
-            $filename = time() . '_menu.' . $image->getClientOriginalExtension();
+            $filename = time().'_menu.'.$image->getClientOriginalExtension();
             $image->storeAs('menus', $filename, 'public');
 
             $valid['image'] = $filename;
@@ -104,17 +108,18 @@ class MenuController extends Controller
 
         return redirect()->route('admin.menu.index')->with('success', [
             'type' => 'update',
-            'message' => 'Menu updated successfuly.'
+            'message' => 'Menu updated successfuly.',
         ]);
     }
 
-
-    public function destroy(Menu $menu){
+    public function destroy(Menu $menu)
+    {
         $menu->image ? Storage::disk('public')->delete('menus/'.$menu->image) : '';
         $menu->delete();
+
         return redirect()->route('admin.menu.index')->with('success', [
             'type' => 'delete',
-            'message' => 'Menu deleted successfuly.'
+            'message' => 'Menu deleted successfuly.',
         ]);
     }
 
@@ -124,7 +129,7 @@ class MenuController extends Controller
         $allQuery = Menu::query()->where('is_active', true);
 
         if ($request->filled('search')) {
-            $allQuery->where('name', 'like', '%' . $request->search . '%');
+            $allQuery->where('name', 'like', '%'.$request->search.'%');
         }
 
         if ($request->filled('category')) {
@@ -141,7 +146,7 @@ class MenuController extends Controller
             $selectedOptionIds = $userPersonalizations->pluck('id')->toArray();
             // Ambil preferensi user dari DB, kelompokkan berdasarkan tipe (untuk logika include/exclude)
             $userOptions = PersonalizationOption::with('personalizationType')
-                ->whereHas('users', fn($q) => $q->where('user_id', $user->id))
+                ->whereHas('users', fn ($q) => $q->where('user_id', $user->id))
                 ->get()
                 ->groupBy('personalization_type_id');
 
@@ -164,7 +169,7 @@ class MenuController extends Controller
                 }
 
                 // --- LOGIKA INCLUDE (Logika OR) ---
-                if (!empty($allIncludeIds)) {
+                if (! empty($allIncludeIds)) {
                     $prefQuery->whereHas('personalizationOptions', function ($q) use ($allIncludeIds) {
                         // Ini akan mengambil menu yang punya SETIDAKNYA satu dari ID yang dipilih
                         $q->whereIn('personalization_option_id', $allIncludeIds);
@@ -172,7 +177,7 @@ class MenuController extends Controller
                 }
 
                 // --- LOGIKA EXCLUDE (Logika AND untuk keamanan) ---
-                if (!empty($allExcludeIds)) {
+                if (! empty($allExcludeIds)) {
                     // Menu yang mengandung salah satu dari yang dihindari tidak akan tampil
                     $prefQuery->whereDoesntHave('personalizationOptions', function ($q) use ($allExcludeIds) {
                         $q->whereIn('personalization_option_id', $allExcludeIds);
@@ -181,7 +186,7 @@ class MenuController extends Controller
 
                 // Filter tambahan (Search & Category)
                 if ($request->filled('search')) {
-                    $prefQuery->where('name', 'like', '%' . $request->search . '%');
+                    $prefQuery->where('name', 'like', '%'.$request->search.'%');
                 }
                 if ($request->filled('category')) {
                     $prefQuery->where('category_id', $request->category);
@@ -196,12 +201,11 @@ class MenuController extends Controller
             'personalized_menus' => $prefMenus, // Data hasil filter DB
             'user_selected_ids' => $userPersonalizations->pluck('id'),
             'categories' => Category::where('is_active', true)->orderBy('name')->get(),
-            'personalizations' => PersonalizationType::with(['personalizationOptions' => fn($q) => $q->where('is_active', true)])
+            'personalizations' => PersonalizationType::with(['personalizationOptions' => fn ($q) => $q->where('is_active', true)])
                 ->where('is_active', true)->get(),
             'filters' => $request->only(['search', 'category']),
         ]);
     }
-
 
     public function getMenus(Request $request)
     {
@@ -219,14 +223,13 @@ class MenuController extends Controller
         }
 
         $menus = $query->get();
-        
+
         // Ambil categories untuk filter tab
         $categories = Category::where('is_active', true)->get();
 
         return response()->json([
             'menus' => $menus,
-            'categories' => $categories
+            'categories' => $categories,
         ]);
     }
-
 }

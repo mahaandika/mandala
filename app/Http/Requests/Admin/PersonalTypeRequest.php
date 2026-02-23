@@ -23,17 +23,16 @@ class PersonalTypeRequest extends FormRequest
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-    {                                                                                                                                                                 
+    {
         return [
-            'name'           => ['required', 'max:255'],
-            'label'          => ['required', 'max:255'],
+            'name' => ['required', 'max:255'],
+            'label' => ['required', 'max:255'],
             'selection_mode' => ['required', Rule::enum(SelectionMode::class)],
             'selection_type' => ['required', Rule::enum(SelectionType::class)],
-            'is_active'      => ['required', 'boolean'],
+            'is_active' => ['required', 'boolean'],
         ];
 
     }
-
 
     public function messages()
     {

@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Booking;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class CancelReservation extends Command
 {
@@ -30,7 +30,7 @@ class CancelReservation extends Command
         $bufferMinutes = 15;
         $now = now();
 
-        $this->info("Memulai pengecekan reservasi...");
+        $this->info('Memulai pengecekan reservasi...');
 
         // 1. Ambil booking yang statusnya masih 'reserve' dan belum check-in
         // Kita filter whereDate <= hari ini untuk optimasi (booking masa depan tidak perlu dicek)
@@ -45,7 +45,7 @@ class CancelReservation extends Command
             try {
                 // 2. Gabungkan booking_date dan booking_time menjadi Carbon object yang utuh
                 // Pastikan format string tanggal benar (Y-m-d H:i:s)
-                $bookingDateTimeString = $booking->booking_date->format('Y-m-d') . ' ' . $booking->booking_time;
+                $bookingDateTimeString = $booking->booking_date->format('Y-m-d').' '.$booking->booking_time;
                 $reservationTime = Carbon::parse($bookingDateTimeString);
 
                 // 3. Hitung batas waktu toleransi (Waktu Booking + 15 Menit)
@@ -53,11 +53,11 @@ class CancelReservation extends Command
 
                 // 4. Cek apakah waktu sekarang sudah MELEWATI batas waktu?
                 if ($now->greaterThanOrEqualTo($expiryTime)) {
-                    
+
                     // Lakukan Update Status
                     // Anda bisa menggunakan 'cancelled' atau 'no_show'
                     $booking->update([
-                        'booking_status' => 'cancelled', 
+                        'booking_status' => 'cancelled',
                     ]);
 
                     $this->line("Booking [{$booking->booking_code}] dibatalkan. (Jadwal: {$bookingDateTimeString})");
@@ -65,14 +65,14 @@ class CancelReservation extends Command
                 }
 
             } catch (\Exception $e) {
-                $this->error("Error pada booking ID {$booking->id}: " . $e->getMessage());
+                $this->error("Error pada booking ID {$booking->id}: ".$e->getMessage());
             }
         }
 
         if ($cancelledCount > 0) {
             $this->info("Berhasil membatalkan {$cancelledCount} reservasi yang terlambat.");
         } else {
-            $this->info("Tidak ada reservasi yang perlu dibatalkan.");
+            $this->info('Tidak ada reservasi yang perlu dibatalkan.');
         }
     }
 }

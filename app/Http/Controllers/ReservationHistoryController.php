@@ -9,7 +9,7 @@ use Inertia\Inertia;
 
 class ReservationHistoryController extends Controller
 {
-  public function indexReservationHistory(Request $request)
+    public function indexReservationHistory(Request $request)
     {
         $query = Booking::with([
             'user:id,name,email,phone',
@@ -29,11 +29,11 @@ class ReservationHistoryController extends Controller
 
         // 3. LOGIKA FILTER TANGGAL (FIXED)
         // Gunakan condition yang lebih ketat untuk mengecek apakah filter benar-benar ada
-        if (!empty($fromDate) || !empty($toDate)) {
-            if (!empty($fromDate)) {
+        if (! empty($fromDate) || ! empty($toDate)) {
+            if (! empty($fromDate)) {
                 $query->whereDate('booking_date', '>=', $fromDate);
             }
-            if (!empty($toDate)) {
+            if (! empty($toDate)) {
                 $query->whereDate('booking_date', '<=', $toDate);
             }
         } else {
@@ -56,8 +56,8 @@ class ReservationHistoryController extends Controller
 
         // 5. Eksekusi
         $bookings = $query
-            ->orderBy('booking_date', 'desc') 
-            ->orderBy('booking_time', 'desc') 
+            ->orderBy('booking_date', 'desc')
+            ->orderBy('booking_time', 'desc')
             ->paginate(10)
             ->withQueryString();
 

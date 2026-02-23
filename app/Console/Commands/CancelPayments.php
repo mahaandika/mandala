@@ -26,7 +26,7 @@ class CancelPayments extends Command
     /**
      * Execute the console command.
      */
-public function handle()
+    public function handle()
     {
         $limit = Carbon::now()->subMinutes(5);
 
@@ -35,10 +35,11 @@ public function handle()
             ->whereIn('booking_status', ['reserve'])
             ->where('updated_at', '<=', $limit)
             ->get();
-        $this->info($expiredBookings->count() . ' reservasi ditemukan.');
+        $this->info($expiredBookings->count().' reservasi ditemukan.');
 
         if ($expiredBookings->isEmpty()) {
             $this->info('Tidak ada pembayaran yang kedaluwarsa.');
+
             return;
         }
 
@@ -47,13 +48,13 @@ public function handle()
                 'payment_status' => 'expired',
                 'booking_status' => 'cancelled',
             ]);
-            
+
             $this->warn("Booking {$booking->booking_code} telah dibatalkan karena kedaluwarsa.");
         }
 
-        $this->info($expiredBookings->count() . ' reservasi berhasil diperbarui ke status expired.');
-        
+        $this->info($expiredBookings->count().' reservasi berhasil diperbarui ke status expired.');
+
         // Log ke Laravel log (opsional)
-        Log::info('Scheduler CancelPayments berhasil dijalankan pada: ' . now());
+        Log::info('Scheduler CancelPayments berhasil dijalankan pada: '.now());
     }
 }

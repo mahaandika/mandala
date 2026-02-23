@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+
 // use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -58,7 +59,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function personalizations(): BelongsToMany
     {
         return $this->belongsToMany(PersonalizationOption::class, 'user_personalizations')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     public function pendingBooking()

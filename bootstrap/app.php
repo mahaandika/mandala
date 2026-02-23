@@ -35,7 +35,6 @@ return Application::configure(basePath: dirname(__DIR__))
             '/midtrans/callback',
         ]);
 
-        
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

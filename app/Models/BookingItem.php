@@ -18,12 +18,12 @@ class BookingItem extends Model
     // helper
     public function getFormattedPriceAttribute()
     {
-        return 'Rp ' . number_format($this->unit_price, 0, ',', '.');
+        return 'Rp '.number_format($this->unit_price, 0, ',', '.');
     }
-    
+
     public function getFormattedSubtotalAttribute()
     {
-        return 'Rp ' . number_format($this->subtotal, 0, ',', '.');
+        return 'Rp '.number_format($this->subtotal, 0, ',', '.');
     }
 
     public function booking()

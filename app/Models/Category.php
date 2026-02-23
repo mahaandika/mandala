@@ -16,7 +16,7 @@ class Category extends Model
     protected $fillable = [
         'name',
         'is_active',
-    ];  
+    ];
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -26,6 +26,4 @@ class Category extends Model
     {
         return $this->hasMany(Menu::class);
     }
-
-
 }

@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class RestaurantTable extends Model
 {
     protected $table = 'restaurant_tables';
+
     protected $guarded = ['id'];
+
     protected $fillable = [
         'table_name',
         'capacity',
@@ -19,6 +21,7 @@ class RestaurantTable extends Model
         'position' => 'array',
         'is_active' => 'boolean',
     ];
+
     public function bookings()
     {
         return $this->belongsToMany(
@@ -26,5 +29,4 @@ class RestaurantTable extends Model
             'booking_tables'
         )->withTimestamps();
     }
-
 }

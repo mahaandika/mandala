@@ -5,18 +5,15 @@ namespace App\Http\Controllers\Reservation;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
-
     public function downloadInvoice(Booking $booking)
     {
-        $booking->load(['items.menu' 
-                         => function ($query) {
-                        $query->withTrashed();
-                        }, 
-                        'user', 'tables', 'walkInPayments']);
+        $booking->load(['items.menu' => function ($query) {
+            $query->withTrashed();
+        },
+            'user', 'tables', 'walkInPayments']);
 
         // 1. Pisahkan item berdasarkan TYPE (BENAR)
         $onlineItems = $booking->items->where('type', 'online');
@@ -30,15 +27,14 @@ class InvoiceController extends Controller
         $payment = $booking->walkInPayments;
 
         return Pdf::loadView('pdf.invoice', [
-            'booking'      => $booking,
-            'onlineItems'  => $onlineItems,
-            'walkInItems'  => $walkInItems,
-            'totalOnline'  => $totalOnline,
-            'totalWalkIn'  => $totalWalkIn,
-            'payment'      => $payment,
+            'booking' => $booking,
+            'onlineItems' => $onlineItems,
+            'walkInItems' => $walkInItems,
+            'totalOnline' => $totalOnline,
+            'totalWalkIn' => $totalWalkIn,
+            'payment' => $payment,
         ])
-        ->setPaper([0, 0, 226, 600], 'portrait') // kertas ukuran 80mm 
-        ->stream('Invoice-' . $booking->booking_code . '.pdf');
+            ->setPaper([0, 0, 226, 600], 'portrait') // kertas ukuran 80mm
+            ->stream('Invoice-'.$booking->booking_code.'.pdf');
     }
-
 }

@@ -10,7 +10,7 @@ use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
-public function index(Request $request)
+    public function index(Request $request)
     {
         $date = $request->get('date', Carbon::today()->toDateString());
 
@@ -50,7 +50,7 @@ public function index(Request $request)
                     'time' => $booking->booking_time,
                     'pax' => $booking->total_people,
                     // 3. Masukkan data count ke array
-                    'walk_in_items' => $walkInCount, 
+                    'walk_in_items' => $walkInCount,
                 ];
             }
         }
@@ -76,7 +76,7 @@ public function index(Request $request)
                     'name' => $table->table_name,
                     'capacity' => $table->capacity,
                     'position' => $table->position,
-                    'status' => !empty($sortedReservations) ? 'reserved' : 'available',
+                    'status' => ! empty($sortedReservations) ? 'reserved' : 'available',
 
                     'reservations' => array_map(function ($res) {
                         return [
@@ -86,14 +86,15 @@ public function index(Request $request)
                             'status' => $res['status'],
                             'time' => $res['time'],
                             // 4. Sertakan di respon akhir
-                            'walk_in_items' => $res['walk_in_items'], 
+                            'walk_in_items' => $res['walk_in_items'],
                         ];
                     }, $sortedReservations),
                 ];
             });
+
         return Inertia::render('admin/dashboard', [
             'tables' => $tables,
-            'date' => $date
+            'date' => $date,
         ]);
     }
-}   
+}

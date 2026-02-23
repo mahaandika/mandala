@@ -17,16 +17,17 @@ class isReceptionis
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             abort(403);
         }
 
-        if (!in_array(Auth::user()->role, [
+        if (! in_array(Auth::user()->role, [
             Role::ADMIN->value,
             Role::RECEPTIONIST->value,
         ])) {
             abort(403);
         }
+
         return $next($request);
     }
 }

@@ -24,18 +24,19 @@ class PersonalMenuController extends Controller
 
         return Inertia::render('admin/personalMenu/index', [
             'menus' => $menus,
-            'filters' => $request->only(['search'])
+            'filters' => $request->only(['search']),
         ]);
     }
 
-    public function create(){
+    public function create()
+    {
         $types = PersonalizationType::with([
             'personalizationOptions' => function ($q) {
                 $q->where('is_active', 1);
-            }
+            },
         ])
-        ->where('is_active', 1)
-        ->get(['id', 'name', 'label', 'selection_mode', 'selection_type',]);
+            ->where('is_active', 1)
+            ->get(['id', 'name', 'label', 'selection_mode', 'selection_type']);
 
         $menus = Menu::whereDoesntHave('personalizationOptions')
             ->select('id', 'name')
@@ -46,7 +47,6 @@ class PersonalMenuController extends Controller
             'menus' => $menus,
         ]);
     }
-
 
     public function store(Request $request)
     {
@@ -96,7 +96,7 @@ class PersonalMenuController extends Controller
                 if ($type->selection_type === 'single' && $opts->count() > 1) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         'personalization_options' => [
-                            "Type '{$type->label}' only allows one option."
+                            "Type '{$type->label}' only allows one option.",
                         ],
                     ]);
                 }
@@ -118,7 +118,7 @@ class PersonalMenuController extends Controller
     public function edit(Menu $menu)
     {
         $menu->load([
-            'personalizationOptions.personalizationType'
+            'personalizationOptions.personalizationType',
         ]);
 
         $types = PersonalizationType::with('personalizationOptions')
@@ -130,7 +130,6 @@ class PersonalMenuController extends Controller
             'types' => $types,
         ]);
     }
-
 
     public function update(Request $request, Menu $menu)
     {
@@ -162,7 +161,7 @@ class PersonalMenuController extends Controller
                 if ($type->selection_type === 'single' && $opts->count() > 1) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         'personalization_options' => [
-                            "Type '{$type->label}' only allows one option."
+                            "Type '{$type->label}' only allows one option.",
                         ],
                     ]);
                 }
@@ -176,9 +175,4 @@ class PersonalMenuController extends Controller
             ->route('admin.personalmenu.index')
             ->with('success', 'Personalisation menu updated successfully');
     }
-
-
-
-
-
 }

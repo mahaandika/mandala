@@ -32,11 +32,11 @@ class Booking extends Model
     {
         static::creating(function ($booking) {
             // Jika booking_code kosong, maka buatkan yang unik
-            if (!$booking->booking_code) {
+            if (! $booking->booking_code) {
                 do {
                     $code = strtoupper(Str::random(10));
                 } while (static::where('booking_code', $code)->exists());
-                
+
                 $booking->booking_code = $code;
             }
         });
@@ -59,6 +59,7 @@ class Booking extends Model
     {
         return $this->hasMany(BookingItem::class);
     }
+
     public function walkInPayments()
     {
         return $this->hasOne(WalkInPayment::class);

@@ -11,7 +11,7 @@ class PersonalizationUserController extends Controller
     {
         $request->validate([
             'option_ids' => 'required|array',
-            'option_ids.*' => 'exists:personalization_options,id'
+            'option_ids.*' => 'exists:personalization_options,id',
         ]);
 
         // Menggunakan sync() untuk Composite Pivot Table

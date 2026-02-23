@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\PersonalizationType;
+use Illuminate\Database\Seeder;
 
 class PersonalizationTypeSeeder extends Seeder
 {

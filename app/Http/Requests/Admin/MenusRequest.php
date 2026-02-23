@@ -23,10 +23,10 @@ class MenusRequest extends FormRequest
     {
         $rules = [
             'category_id' => ['required', 'exists:categories,id'],
-            'name'        => ['required', 'max:50'],
+            'name' => ['required', 'max:50'],
             'description' => ['required'],
-            'price'       => ['required'],
-            'is_active'   => ['required', 'boolean'],
+            'price' => ['required'],
+            'is_active' => ['required', 'boolean'],
         ];
 
         if ($this->isMethod('post')) {

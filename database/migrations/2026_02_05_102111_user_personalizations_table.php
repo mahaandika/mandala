@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('user_personalizations', function (Blueprint $table) {
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('personalization_option_id')->constrained()->onDelete('cascade');
-            
+
             // Membuat Composite Primary Key
             $table->primary(['user_id', 'personalization_option_id']);
             $table->timestamps();

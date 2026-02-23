@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\PersonalizationType;
 use App\Models\PersonalizationOption;
+use App\Models\PersonalizationType;
+use Illuminate\Database\Seeder;
 
 class PersonalizationOptionSeeder extends Seeder
 {
@@ -21,7 +21,7 @@ class PersonalizationOptionSeeder extends Seeder
         }
 
         // Allergens
-        foreach (['gluten','dairy','eggs','fish','shellfish','nuts','soy','coconut'] as $item) {
+        foreach (['gluten', 'dairy', 'eggs', 'fish', 'shellfish', 'nuts', 'soy', 'coconut'] as $item) {
             PersonalizationOption::firstOrCreate([
                 'personalization_type_id' => $types['Allergens to Avoid']->id,
                 'name' => $item,
@@ -29,7 +29,7 @@ class PersonalizationOptionSeeder extends Seeder
         }
 
         // Dietary
-        foreach (['vegetarian','vegan','gluten-free','dairy-free','pescatarian'] as $item) {
+        foreach (['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'pescatarian'] as $item) {
             PersonalizationOption::firstOrCreate([
                 'personalization_type_id' => $types['Dietary Preferences']->id,
                 'name' => $item,
@@ -37,7 +37,7 @@ class PersonalizationOptionSeeder extends Seeder
         }
 
         // Flavor
-        foreach (['savory','spicy','sweet','rich','light','fresh','smoky','creamy'] as $item) {
+        foreach (['savory', 'spicy', 'sweet', 'rich', 'light', 'fresh', 'smoky', 'creamy'] as $item) {
             PersonalizationOption::firstOrCreate([
                 'personalization_type_id' => $types['Flavor Preferences']->id,
                 'name' => $item,

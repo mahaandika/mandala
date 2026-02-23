@@ -9,7 +9,6 @@ use App\Models\Menu;
 use App\Models\RestaurantTable;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -17,8 +16,8 @@ class BookingSeeder extends Seeder
 {
     public function run(): void
     {
-        $users  = User::where('role', Role::CUSTOMER)->get();
-        $menus  = Menu::where('is_active', true)->get();
+        $users = User::where('role', Role::CUSTOMER)->get();
+        $menus = Menu::where('is_active', true)->get();
         $tables = RestaurantTable::all();
 
         $dates = [
@@ -43,7 +42,7 @@ class BookingSeeder extends Seeder
         foreach ($dates as $date) {
             for ($i = 0; $i < 5; $i++) {
                 $status = $statuses[array_rand($statuses)];
-                $user   = $users->random();
+                $user = $users->random();
 
                 // jam booking random (17, 19, 21)
                 $hour = collect([17, 19, 21])->random();
@@ -54,8 +53,7 @@ class BookingSeeder extends Seeder
                 $occupied[$dateKey][$time] ??= collect();
 
                 // cari meja yang belum dipakai di waktu tsb
-                $availableTables = $tables->reject(fn ($t) =>
-                    $occupied[$dateKey][$time]->contains($t->id)
+                $availableTables = $tables->reject(fn ($t) => $occupied[$dateKey][$time]->contains($t->id)
                 );
 
                 if ($availableTables->count() < 1) {
