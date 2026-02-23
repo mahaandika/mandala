@@ -259,7 +259,7 @@ export default function WalkInWizard({
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        onClick={() => setPax(pax + 1)}
+                                        onClick={() => setPax(Number(pax) + 1)}
                                     >
                                         <Plus size={16} />
                                     </Button>
