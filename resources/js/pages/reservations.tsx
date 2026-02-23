@@ -13,7 +13,7 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import PhoneInput from 'react-phone-number-input';
+import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 // --- TYPES & INTERFACES ---
@@ -77,7 +77,7 @@ export default function Reservations({
         type: 'error' | 'success';
     } | null>(null);
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, setError } = useForm({
         // Cek apakah variabel auth_user ada, jika tidak gunakan string kosong
         name: auth_user?.name || '',
         email: auth_user?.email || '',
@@ -227,6 +227,14 @@ export default function Reservations({
                 type: 'error',
             });
             return;
+        }
+
+        if (data.phone && !isValidPhoneNumber(data.phone)) {
+            setError(
+                'phone',
+                'Nomor telepon tidak valid untuk negara yang dipilih',
+            );
+            return; // Berhenti di sini jika tidak valid
         }
 
         const now = new Date();
