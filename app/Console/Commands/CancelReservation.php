@@ -52,7 +52,7 @@ class CancelReservation extends Command
                 $expiryTime = $reservationTime->copy()->addMinutes($bufferMinutes);
 
                 // 4. Cek apakah waktu sekarang sudah MELEWATI batas waktu?
-                if ($now->greaterThan($expiryTime)) {
+                if ($now->greaterThanOrEqualTo($expiryTime)) {
                     
                     // Lakukan Update Status
                     // Anda bisa menggunakan 'cancelled' atau 'no_show'
