@@ -21,12 +21,14 @@ return new class extends Migration
             $table->enum('role', [
                 Role::ADMIN->value,
                 Role::RECEPTIONIST->value,
+                Role::CASHIER->value,
                 Role::CUSTOMER->value,
             ])->default('customer');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+            $table->enum('status', ['active', 'inactive'])->default('active');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
