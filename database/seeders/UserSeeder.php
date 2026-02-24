@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory(10)->create();
+        // User::factory(10)->create();
 
         User::firstOrCreate(
             ['email' => 'admin@gmail.com'],
@@ -46,6 +46,17 @@ class UserSeeder extends Seeder
                 'address' => 'Test Address',
                 'role' => Role::RECEPTIONIST->value,
                 'email_verified_at' => now(),
+            ]
+        );
+        User::firstOrCreate(
+            ['email' => 'cashier1@gmail.com'],
+            [
+                'name' => 'Cashier User',
+                'password' => 'admin123',
+                'phone' => '1234567890',
+                'address' => 'Test Address',
+                'role' => Role::CASHIER->value,
+                'email_verified_at' => now(),   
             ]
         );
     }
