@@ -34,11 +34,17 @@ class FortifyServiceProvider extends ServiceProvider
             {
                 public function toResponse($request)
                 {
-                    // Logika pengecekan role
+                    if($request->user()->status !== 'active') {
+                        Auth::logout();
+                        throw ValidationException::withMessages([
+                            'email' => ['Your account is inactive. Please contact the administrator.'],
+                        ]);
+                    }
 
                     $url = match ($request->user()->role) {
                         Role::ADMIN->value,
-                        Role::RECEPTIONIST->value => '/admin/dashboard',
+                        Role::RECEPTIONIST->value, 
+                        Role::CASHIER->value => '/admin/dashboard',
                         default => '/',
                     };
 
