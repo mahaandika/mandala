@@ -34,6 +34,7 @@ import AppLogo from './app-logo';
 ===================== */
 const ROLE_ADMIN = 'admin';
 const ROLE_RECEPTIONIST = 'receptionist';
+const ROLE_CASHIER = 'cashier';
 
 /* =====================
    NAV CONFIG
@@ -50,6 +51,11 @@ const dashboardNav: NavItem[] = [
 
 // Admin only
 const adminNav: NavItem[] = [
+    {
+        title: 'Employees',
+        href: '/admin/employee', // Gunakan direct string path
+        icon: MonitorCog,
+    },
     {
         title: 'Reservation History',
         href: indexReservationHistory(),
@@ -96,7 +102,7 @@ const getNavItemsByRole = (role?: string): NavItem[] => {
         return [...dashboardNav, ...adminNav];
     }
 
-    if (role === ROLE_RECEPTIONIST) {
+    if (role === ROLE_RECEPTIONIST || role === ROLE_CASHIER) {
         return dashboardNav;
     }
 
