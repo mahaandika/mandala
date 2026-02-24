@@ -3,6 +3,7 @@
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\PersonalizationUserController;
 use App\Http\Controllers\PersonalMenuController;
@@ -101,7 +102,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'isRecep
         Route::get('personalMenu/{menu}/edit', [PersonalMenuController::class, 'edit'])->name('personalmenu.edit');
         Route::put('personalMenu/{menu}', [PersonalMenuController::class, 'update'])->name('personalmenu.update');
         Route::get('reservationHistory', [ReservationHistoryController::class, 'indexReservationHistory'])->name('reservationHistory.index');
-    });
+   
+        Route::resource('employee', EmployeeController::class)->except(['create', 'show', 'edit']);
+        });
 });
 
 require __DIR__.'/api.php';
