@@ -24,6 +24,7 @@ class isReceptionis
         if (! in_array(Auth::user()->role, [
             Role::ADMIN->value,
             Role::RECEPTIONIST->value,
+            Role::CASHIER->value,
         ])) {
             abort(403);
         }
