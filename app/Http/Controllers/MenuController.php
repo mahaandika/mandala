@@ -36,7 +36,7 @@ class MenuController extends Controller
 
         $menus = $query
             ->orderBy('created_at', 'desc')
-            ->paginate(5)
+            ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('admin/menu/index', [
