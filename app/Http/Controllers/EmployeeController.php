@@ -39,7 +39,7 @@ class EmployeeController extends Controller
             'name'     => 'required|string|max:50',
             'email'    => 'required|string|email|max:100|unique:users',
             'password' => 'required|string|min:8',
-            'phone'    => 'nullable|string|max:16|unique:users',
+            'phone'    => 'required|string|max:16|unique:users',
             'role'     => ['required', new Enum(Role::class)],
             'status'   => 'required|in:active,inactive',
         ]);
@@ -62,7 +62,7 @@ class EmployeeController extends Controller
         $validated = $request->validate([
             'name'     => 'required|string|max:50',
             'email'    => ['required', 'string', 'email', 'max:100', Rule::unique('users')->ignore($employee->id)],
-            'phone'    => ['nullable','string', 'max:16', Rule::unique('users')->ignore($employee->id)],
+            'phone'    => ['required','string', 'max:16', Rule::unique('users')->ignore($employee->id)],
             'role'     => ['required', new Enum(Role::class)],
             'status'   => 'required|in:active,inactive',
         ]);
