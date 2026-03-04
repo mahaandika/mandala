@@ -13,11 +13,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('phone')->max(16);
-            $table->string('address');
+            $table->string('name')->max(50);
+            $table->string('email')->max(100)->unique();
+            $table->string('phone')->max(16)->unique();
+            $table->string('address')->max(50);
             $table->enum('role', [
                 Role::ADMIN->value,
                 Role::RECEPTIONIST->value,
