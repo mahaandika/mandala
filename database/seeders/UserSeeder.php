@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Admin',
                 'password' => 'admin123',
-                'phone' => '1234567890',
+                'phone' => '087899012345',
                 'address' => 'Test Address',
                 'role' => Role::ADMIN->value,
                 'email_verified_at' => now(),
@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Receptionist User',
                 'password' => 'admin123',
-                'phone' => '1234567890',
+                'phone' => '087899098765',
                 'address' => 'Test Address',
                 'role' => Role::RECEPTIONIST->value,
                 'email_verified_at' => now(),
@@ -42,7 +42,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Receptionist User',
                 'password' => 'admin123',
-                'phone' => '1234567890',
+                'phone' => '087908435800',
                 'address' => 'Test Address',
                 'role' => Role::RECEPTIONIST->value,
                 'email_verified_at' => now(),
@@ -53,7 +53,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Cashier User',
                 'password' => 'admin123',
-                'phone' => '1234567890',
+                'phone' => '087890348590',
                 'address' => 'Test Address',
                 'role' => Role::CASHIER->value,
                 'email_verified_at' => now(),   
