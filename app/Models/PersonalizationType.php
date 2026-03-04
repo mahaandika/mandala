@@ -10,8 +10,7 @@ class PersonalizationType extends Model
 
     protected $fillable = [
         'name',
-        'slug',
-        'label',
+        'description',
         'selection_mode',
         'selection_type',
         'is_active',
