@@ -140,6 +140,9 @@ class MenuController extends Controller
         $prefMenus = collect();
         $userPersonalizations = collect();
         if (Auth::check()) {
+            /**
+             * @var /App/Models
+             */
             $user = Auth::user();
             $prefQuery = Menu::query()->where('is_active', true);
             $userPersonalizations = $user->personalizations()->get();
