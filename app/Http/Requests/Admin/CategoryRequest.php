@@ -26,7 +26,7 @@ class CategoryRequest extends FormRequest
         return [
             'name' => [
                 'required',
-                'max:255',
+                'max:50',
                 Rule::unique(Category::class)
                     ->ignore($this->category) // Mengabaikan diri sendiri saat update
                     ->whereNull('deleted_at'), // Mengabaikan data yang sudah di soft-delete
