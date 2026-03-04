@@ -14,7 +14,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Index() {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
-        label: '',
+        description: '',
         selection_mode: 'include',
         selection_type: 'single',
         is_active: true,
@@ -203,16 +203,16 @@ export default function Index() {
                                 <textarea
                                     id="description"
                                     rows={4}
-                                    value={data.label}
+                                    value={data.description}
                                     onChange={(e) =>
-                                        setData('label', e.target.value)
+                                        setData('description', e.target.value)
                                     }
                                     placeholder="Type your description..."
                                     className="w-full resize-none rounded-lg border border-gray-300 bg-gray-50 p-3 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500"
                                 />
-                                {errors.label && (
+                                {errors.description && (
                                     <p className="mt-1 text-sm text-red-600">
-                                        {errors.label}
+                                        {errors.description}
                                     </p>
                                 )}
                             </div>
