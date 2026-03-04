@@ -53,8 +53,6 @@ class CategoriesController extends Controller
 
     public function edit(Category $category)
     {
-
-        // ini belum tak jelas untuk halamnnya atau file reactnya
         return Inertia::render('admin/categories/edit', ['category' => $category]);
     }
 
