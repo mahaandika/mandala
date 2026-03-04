@@ -34,7 +34,6 @@ class PersonalTypeController extends Controller
 
     public function create()
     {
-        // INI belom bener reactnya
         return Inertia::render('admin/personalType/create', []);
     }
 
