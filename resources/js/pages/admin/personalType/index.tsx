@@ -25,7 +25,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 type PersonalType = {
     id: number;
     name: string;
-    label: string;
+    description: string;
     selection_mode: string;
     selection_type: string;
     is_active: boolean;
@@ -222,7 +222,7 @@ export default function Index({
                                             </TableCell>
 
                                             <TableCell className="px-4 py-4 break-words whitespace-normal">
-                                                {item.label ?? '-'}
+                                                {item.description ?? '-'}
                                             </TableCell>
 
                                             <TableCell className="px-4 py-4 break-words whitespace-normal">
