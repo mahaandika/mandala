@@ -23,8 +23,19 @@ class PersonalOptionRequest extends FormRequest
     {
         return [
             'personalization_type_id' => ['required', 'exists:personalization_types,id'],
-            'name' => ['required', 'max:255'],
+            'name' => ['required', 'max:50'],
             'is_active' => ['required', 'boolean'],
+        ];
+    }
+    public function messages(): array
+    {
+        return [
+            'personalization_type_id.required' => 'Tipe personalisasi wajib diisi.',
+            'personalization_type_id.exists' => 'Tipe personalisasi tidak valid.',
+            'name.required' => 'Nama opsi wajib diisi.',
+            'name.max' => 'Nama opsi maksimal 50 karakter.',
+            'is_active.required' => 'Status aktif wajib diisi.',
+            'is_active.boolean' => 'Status aktif harus berupa true atau false.',
         ];
     }
 }
