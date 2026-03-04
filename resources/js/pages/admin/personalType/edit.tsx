@@ -15,7 +15,7 @@ export default function Edit({ personalType }: any) {
     const { data, setData, put, processing, errors } = useForm({
         // Tambahkan || '' agar TypeScript yakin ini adalah string
         name: personalType?.name || '',
-        label: personalType?.label || '',
+        description: personalType?.description || '',
         selection_mode: personalType?.selection_mode || 'include',
         selection_type: personalType?.selection_type || 'single',
         is_active: personalType?.is_active ?? true,
@@ -148,15 +148,15 @@ export default function Edit({ personalType }: any) {
                             </label>
                             <textarea
                                 rows={4}
-                                value={data.label}
+                                value={data.description}
                                 onChange={(e) =>
-                                    setData('label', e.target.value)
+                                    setData('description', e.target.value)
                                 }
                                 className="w-full resize-none rounded-lg border bg-gray-50 p-3 text-sm"
                             />
-                            {errors.label && (
+                            {errors.description && (
                                 <p className="mt-1 text-sm text-red-600">
-                                    {errors.label}
+                                    {errors.description}
                                 </p>
                             )}
                         </div>
