@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Reservation;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreReservationRequest;
 use App\Models\Booking;
 use App\Models\BookingItem;
 use App\Models\Menu;
@@ -76,7 +77,7 @@ class ReservationController extends Controller
         ]);
     }
 
-    public function storeReservation(Request $request)
+    public function storeReservation(StoreReservationRequest $request)
     {
         $now = Carbon::now();
         $minTime = '11:00';
