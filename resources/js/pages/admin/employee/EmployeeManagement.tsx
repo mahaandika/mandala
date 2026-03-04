@@ -305,6 +305,11 @@ export default function EmployeeManagement({ employees }: Props) {
                                     }
                                     className="w-full rounded-md border border-gray-300 p-2 focus:border-indigo-500 focus:ring-indigo-500"
                                 />
+                                {errors.phone && (
+                                    <span className="text-sm text-red-500">
+                                        {errors.phone}
+                                    </span>
+                                )}
                             </div>
 
                             <div>
