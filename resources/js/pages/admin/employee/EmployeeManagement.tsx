@@ -16,8 +16,8 @@ interface Employee {
     id: number;
     name: string;
     email: string;
-    phone: string | null;
-    address: string | null;
+    phone: string;
+    address: string;
     role: 'cashier' | 'receptionist';
     status: 'active' | 'inactive';
 }
