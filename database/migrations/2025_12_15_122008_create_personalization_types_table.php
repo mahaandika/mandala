@@ -9,13 +9,13 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+     public function up(): void
     {
         Schema::create('personalization_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('slug');
-            $table->string('label');
+            $table->string('name')->max(50);
+            // $table->string('slug');
+            $table->string('description')->max(100);
             $table->enum('selection_mode', ['include', 'exclude'])->default('include');
             $table->enum('selection_type', ['single', 'multiple'])->default('single');
             $table->boolean('is_active')->default(true);
