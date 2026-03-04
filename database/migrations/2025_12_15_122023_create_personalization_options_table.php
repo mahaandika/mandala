@@ -9,12 +9,12 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+      public function up(): void
     {
         Schema::create('personalization_options', function (Blueprint $table) {
             $table->id();
             $table->foreignId('personalization_type_id')->constrained()->onDelete('cascade');
-            $table->string('name');
+            $table->string('name')->max(50);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
