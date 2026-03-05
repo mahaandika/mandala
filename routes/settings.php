@@ -14,7 +14,7 @@ Route::get('/email/verify-notice/{id}/{hash}', function ($id, $hash) {
         'hash' => $hash,
         'status' => session('status'),
     ]);
-})->name('verification.notice.unauthenticated');
+})->name('verification.notice');
 
 // 2. Handler Klik Link dari Email
 Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
