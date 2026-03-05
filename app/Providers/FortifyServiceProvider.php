@@ -54,16 +54,15 @@ class FortifyServiceProvider extends ServiceProvider
             };
         });
         $this->app->singleton(RegisterResponse::class, function () {
-        return new class implements RegisterResponse
+            return new class implements RegisterResponse
             {
                 public function toResponse($request)
                 {
-                    // JANGAN panggil Auth::logout() di sini karena akan merusak token CSRF sesi saat ini
-                    
-                    // Ambil user yang sedang login (yang baru saja register)
-                    $user = $request->user();
+                    Auth::logout();
+                    // Ambil user yang baru saja dibuat (user terakhir yang registrasi di sesi ini)
+                    $user = \App\Models\User::latest()->first();
 
-                    return redirect()->route('verification.notice', [
+                    return redirect()->route('verification.notice.unauthenticated', [
                         'id' => $user->id,
                         'hash' => sha1($user->getEmailForVerification()),
                     ]);
