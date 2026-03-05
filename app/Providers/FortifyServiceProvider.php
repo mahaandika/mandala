@@ -30,30 +30,30 @@ class FortifyServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Kustomisasi Redirect Setelah LOGIN
-        $this->app->singleton(LoginResponse::class, function () {
-            return new class implements LoginResponse
-            {
-                public function toResponse($request)
-                {
-                    if($request->user()->status !== 'active') {
-                        Auth::logout();
-                        throw ValidationException::withMessages([
-                            'email' => ['Your account is inactive. Please contact the administrator.'],
-                        ]);
-                    }
+        // $this->app->singleton(LoginResponse::class, function () {
+        //     return new class implements LoginResponse
+        //     {
+        //         public function toResponse($request)
+        //         {
+        //             if($request->user()->status !== 'active') {
+        //                 Auth::logout();
+        //                 throw ValidationException::withMessages([
+        //                     'email' => ['Your account is inactive. Please contact the administrator.'],
+        //                 ]);
+        //             }
 
-                    $url = match ($request->user()->role) {
-                        Role::ADMIN->value,
-                        Role::RECEPTIONIST->value, 
-                        Role::CASHIER->value => '/admin/dashboard',
-                        default => '/',
-                    };
+        //             $url = match ($request->user()->role) {
+        //                 Role::ADMIN->value,
+        //                 Role::RECEPTIONIST->value, 
+        //                 Role::CASHIER->value => '/admin/dashboard',
+        //                 default => '/',
+        //             };
 
-                    return redirect()->intended($url);
+        //             return redirect()->intended($url);
 
-                }
-            };
-        });
+        //         }
+        //     };
+        // });
         $this->app->singleton(RegisterResponse::class, function () {
             return new class implements RegisterResponse
             {
