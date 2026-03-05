@@ -9,7 +9,7 @@ use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Request;
 
 Route::get('/email/verify-notice/{id}/{hash}', function ($id, $hash) {
-    return Inertia::render('auth/verify-email', [
+    return Inertia::location('auth/verify-email', [
         'id' => $id,
         'hash' => $hash,
         'status' => session('status'),
