@@ -62,7 +62,7 @@ class FortifyServiceProvider extends ServiceProvider
                     // Ambil user yang baru saja dibuat (user terakhir yang registrasi di sesi ini)
                     $user = \App\Models\User::latest()->first();
 
-                    return redirect()->route('verification.notice.unauthenticated', [
+                    return redirect()->route('verification.notice', [
                         'id' => $user->id,
                         'hash' => sha1($user->getEmailForVerification()),
                     ]);
