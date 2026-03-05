@@ -55,7 +55,7 @@ class FortifyServiceProvider extends ServiceProvider
         //         }
         //     };
         // });
-        $this->app->singleton(RegisterResponse::class, ResponsesRegisterResponse::class);
+        // $this->app->singleton(RegisterResponse::class, ResponsesRegisterResponse::class);
 
         // Kustomisasi Redirect Setelah LOGOUT (Opsional)
         // $this->app->instance(LogoutResponse::class, new class implements LogoutResponse
@@ -125,11 +125,18 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        // Fortify::verifyEmailView(function (Request $request) {
-        //     return Inertia::render('auth/verify-email', [
-        //         'status' => session('status'),
-        //     ]);
-        // });
+        Fortify::verifyEmailView(function (Request $request) {
+            /** @var \App\Models\User $user */
+            $user = Auth::user();
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            Log::info('singleton jalan');
+            return redirect()->route('verification.notice.unauthenticated', [
+                'id' => $user->id,
+                'hash' => sha1($user->getEmailForVerification()),
+            ]);
+        });
 
         Fortify::registerView(fn () => Inertia::render('auth/register'));
 
