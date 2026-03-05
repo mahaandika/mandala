@@ -27,7 +27,7 @@ class CreateNewUser implements CreatesNewUsers
                 'string',
                 'email',
                 'max:100',
-                Rule::unique(User::class),
+                Rule::unique(User::class)->whereNotNull('email_verified_at'),
             ],
             'password' => $this->passwordRules(),
             'phone' => ['required', 'string', 'max:16', Rule::unique(User::class)],
