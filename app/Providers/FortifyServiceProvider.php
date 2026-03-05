@@ -10,6 +10,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -62,6 +63,7 @@ class FortifyServiceProvider extends ServiceProvider
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
+                    Log::info('singleton jalan');
                     return redirect()->route('verification.notice.unauthenticated', [
                         'id' => $user->id,
                         'hash' => sha1($user->getEmailForVerification()),
