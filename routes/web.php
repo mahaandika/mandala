@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Role;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\DashboardController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Reservation\ItemMenusController;
 use App\Http\Controllers\Reservation\PaymentController;
 use App\Http\Controllers\Reservation\ReservationController;
 use App\Http\Controllers\ReservationHistoryController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -35,6 +37,23 @@ Route::middleware(['checkPersonalization'])->group(function () {
 
     Route::get('/reservations', [ReservationController::class, 'indexReservation'])
         ->name('reservations');
+});
+
+Route::get('/dashboard', function(){
+    $user = Auth::user();
+    if($user->email_verified_at){
+        $url = match ($user->role) {
+                        Role::ADMIN->value,
+                        Role::RECEPTIONIST->value, 
+                        Role::CASHIER->value => '/admin/dashboard',
+                        default => '/',
+                    };
+
+                    return redirect()->intended($url);
+    } return redirect()->route('verification.notice.unauthenticated', [
+                        'id' => $user->id,
+                        'hash' => sha1($user->getEmailForVerification()),
+                    ]);
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
