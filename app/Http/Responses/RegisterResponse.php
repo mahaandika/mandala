@@ -12,8 +12,6 @@ class RegisterResponse implements ContractsRegisterResponse
     {
         $user = Auth::user();
         Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
         Log::info('singleton jalan');
         return redirect()->route('verification.notice.unauthenticated', [
             'id' => $user->id,
