@@ -55,7 +55,7 @@ class FortifyServiceProvider extends ServiceProvider
         //         }
         //     };
         // });
-        $this->app->singleton(RegisterResponse::class, ResponsesRegisterResponse::class);
+        // $this->app->singleton(RegisterResponse::class, ResponsesRegisterResponse::class);
 
         // Kustomisasi Redirect Setelah LOGOUT (Opsional)
         // $this->app->instance(LogoutResponse::class, new class implements LogoutResponse

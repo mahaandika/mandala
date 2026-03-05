@@ -40,6 +40,7 @@ Route::middleware(['checkPersonalization'])->group(function () {
 });
 
 Route::get('/dashboard', function(){
+    /** @var \App\Models\User $user */
     $user = Auth::user();
     if($user->email_verified_at){
         $url = match ($user->role) {

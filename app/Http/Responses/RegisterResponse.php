@@ -10,6 +10,7 @@ class RegisterResponse implements ContractsRegisterResponse
 {
     public function toResponse($request)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         Auth::logout();
         Log::info('singleton jalan');
