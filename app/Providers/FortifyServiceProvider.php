@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Enums\Role;
+use App\Http\Responses\RegisterResponse as ResponsesRegisterResponse;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -54,23 +55,7 @@ class FortifyServiceProvider extends ServiceProvider
         //         }
         //     };
         // });
-        // $this->app->singleton(RegisterResponse::class, function () {
-        //     return new class implements RegisterResponse
-        //     {
-        //         public function toResponse($request)
-        //         {
-        //             $user = Auth::user();
-        //             Auth::logout();
-        //             $request->session()->invalidate();
-        //             $request->session()->regenerateToken();
-        //             Log::info('singleton jalan');
-        //             return redirect()->route('verification.notice.unauthenticated', [
-        //                 'id' => $user->id,
-        //                 'hash' => sha1($user->getEmailForVerification()),
-        //             ]);
-        //         }
-        //     };
-        // });
+        $this->app->singleton(RegisterResponse::class, ResponsesRegisterResponse::class);
 
         // Kustomisasi Redirect Setelah LOGOUT (Opsional)
         // $this->app->instance(LogoutResponse::class, new class implements LogoutResponse
