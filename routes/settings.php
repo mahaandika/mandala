@@ -16,8 +16,8 @@ Route::get('/email/verify-notice/{id}/{hash}', function ($id, $hash) {
 // 2. Route baru untuk merender halamannya
 Route::get('/auth/verify-email', function (Request $request) {
     return Inertia::render('auth/verify-email', [
-        'id' => $request()->query('id'),
-        'hash' => $request()->query('hash'),
+        'id' => $request->query('id'),
+        'hash' => $request->query('hash'),
         'status' => session('status'),
     ]);
 });
