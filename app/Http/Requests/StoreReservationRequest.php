@@ -61,7 +61,6 @@ class StoreReservationRequest extends FormRequest
 
             'table_ids.*' => [
                 'required',
-                Rule::exists('tables', 'id'),
             ],
         ];
     }
