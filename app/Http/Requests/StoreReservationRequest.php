@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class StoreReservationRequest extends FormRequest
@@ -31,7 +32,7 @@ class StoreReservationRequest extends FormRequest
                 'string',
                 'max:16',
                Rule::unique(User::class)
-                    ->ignore($this->user),
+                    ->ignore(Auth::user()->phone),
             ],
 
             'person' => [
