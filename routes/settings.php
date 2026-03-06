@@ -9,12 +9,18 @@ use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Request;
 
 Route::get('/email/verify-notice/{id}/{hash}', function ($id, $hash) {
-    return Inertia::location('auth/verify-email', [
-        'id' => $id,
-        'hash' => $hash,
+    // Lakukan redirect biasa ke URL baru sambil membawa data
+    return redirect()->to("/auth/verify-email?id={$id}&hash={$hash}");
+})->name('verification.notice.unauthenticated');
+
+// 2. Route baru untuk merender halamannya
+Route::get('/auth/verify-email', function (Request $request) {
+    return Inertia::render('auth/verify-email', [
+        'id' => $request()->query('id'),
+        'hash' => $request()->query('hash'),
         'status' => session('status'),
     ]);
-})->name('verification.notice.unauthenticated');
+});
 
 // 2. Handler Klik Link dari Email
 Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
