@@ -31,8 +31,7 @@ class StoreReservationRequest extends FormRequest
                 'required',
                 'string',
                 'max:16',
-               Rule::unique(User::class)
-                    ->ignore(Auth::user()->phone),
+               Rule::unique('users', 'phone')->ignore($this->user()?->id),
             ],
 
             'person' => [
