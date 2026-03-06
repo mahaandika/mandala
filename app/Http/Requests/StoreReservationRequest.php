@@ -31,8 +31,7 @@ class StoreReservationRequest extends FormRequest
                 'string',
                 'max:16',
                Rule::unique(User::class)
-                    ->ignore($this->user) 
-                    ->whereNull('deleted_at'),
+                    ->ignore($this->user),
             ],
 
             'person' => [
