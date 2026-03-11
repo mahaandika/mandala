@@ -36,9 +36,10 @@ class RegisterController extends Controller
     // Gunakan Database Transaction untuk keamanan data
     return DB::transaction(function () use ($validated) {
         
-        $user = User::create([
-            'name' => $validated['name'],
+        $user = User::updateOrCreate([
             'email' => $validated['email'],
+            'email_verified_at' => null],[
+            'name' => $validated['name'],
             'password' => Hash::make($validated['password']),
             'phone' => $validated['phone'],
             'address' => $validated['address'],
