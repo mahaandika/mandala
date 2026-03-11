@@ -25,7 +25,7 @@ return new class extends Migration
                 Role::CUSTOMER->value,
             ])->default('customer');
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('password')->max(80);
             $table->rememberToken();
             $table->timestamps();
             $table->enum('status', ['active', 'inactive'])->default('active');
