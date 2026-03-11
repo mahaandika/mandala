@@ -20,13 +20,13 @@ Route::get('/email/verify-notice/{id}/{hash}', function ($id, $hash) {
 })->name('verification.notice.unauthenticated');
 
 // 2. Route baru untuk merender halamannya
-Route::get('/auth/verify-email', function (Request $request) {
-    return Inertia::render('auth/verify-email', [
-        'id' => $request->query('id'),
-        'hash' => $request->query('hash'),
-        'status' => session('status'),
-    ]);
-});
+// Route::get('/auth/verify-email', function (Request $request) {
+//     return Inertia::render('auth/verify-email', [
+//         'id' => $request->query('id'),
+//         'hash' => $request->query('hash'),
+//         'status' => session('status'),
+//     ]);
+// });
 
 // 2. Handler Klik Link dari Email
 Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
