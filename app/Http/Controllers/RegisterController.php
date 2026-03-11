@@ -35,9 +35,9 @@ class RegisterController extends Controller
 
         Log::info('Validasi registrasi berhasil dilewati');
 
-        DB::beginTransaction();
+        // DB::beginTransaction();
 
-        try {
+        // try {
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -61,7 +61,7 @@ class RegisterController extends Controller
         //     ]);
             
         // } else {
-            DB::commit();
+            // DB::commit();
             
             Log::info('Email verifikasi berhasil dikirim', ['user_id' => $user->id]);
 
@@ -71,17 +71,17 @@ class RegisterController extends Controller
             ]);
         // }
 
-        } catch (Exception $e) {
-            DB::rollBack();
+        // } catch (Exception $e) {
+        //     DB::rollBack();
 
-            Log::error('Registrasi dibatalkan karena gagal mengirim email', [
-                'email' => $request->email,
-                'error_message' => $e->getMessage()
-            ]);
+        //     Log::error('Registrasi dibatalkan karena gagal mengirim email', [
+        //         'email' => $request->email,
+        //         'error_message' => $e->getMessage()
+        //     ]);
 
-            return back()->withInput()->withErrors([
-                'email' => 'Sistem kami sedang mengalami gangguan saat mengirim email verifikasi. Silakan coba beberapa saat lagi.'
-            ]);
-        }
+        //     return back()->withInput()->withErrors([
+        //         'email' => 'Sistem kami sedang mengalami gangguan saat mengirim email verifikasi. Silakan coba beberapa saat lagi.'
+        //     ]);
+        // }
     }
 }
