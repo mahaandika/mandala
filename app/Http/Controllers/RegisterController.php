@@ -34,7 +34,7 @@ class RegisterController extends Controller
     ]);
 
     // Gunakan Database Transaction untuk keamanan data
-    return DB::transaction(function () use ($validated) {
+    // return DB::transaction(function () use ($validated) {
         
         $user = User::updateOrCreate([
             'email' => $validated['email'],
@@ -59,6 +59,6 @@ class RegisterController extends Controller
             'id' => $user->id,
             'hash' => sha1($user->getEmailForVerification()),
         ]);
-    });
+    // });
 }
 }
