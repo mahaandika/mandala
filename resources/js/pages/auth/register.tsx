@@ -45,6 +45,9 @@ export default function Register() {
         post(`/register`, {
             onSuccess: () => {
                 reset('password', 'password_confirmation');
+            },
+            onError: () => {
+                reset('password', 'password_confirmation');
                 router.reload();
             },
         });
