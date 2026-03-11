@@ -16,72 +16,48 @@ use Illuminate\Validation\Rules\Password;
 class RegisterController extends Controller
 {
     public function store(Request $request)
-    {
-        Log::info('Proses registrasi manual dimulai', ['email' => $request->email]);
+{
+    Log::info('Proses registrasi manual dimulai', ['email' => $request->email]);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'min:5'],
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:100',
-                Rule::unique(User::class),
-            ],
-            'password' => ['required', 'string', 'confirmed', Password::defaults()],
-            'phone' => ['required', 'string', 'max:16', Rule::unique(User::class)],
-            'address' => ['required', 'string', 'max:50'],
+    $validated = $request->validate([
+        'name' => ['required', 'string', 'max:255', 'min:5'],
+        'email' => [
+            'required',
+            'string',
+            'email',
+            'max:100',
+            Rule::unique(User::class),
+        ],
+        'password' => ['required', 'string', 'confirmed', Password::defaults()],
+        'phone' => ['required', 'string', 'max:16', Rule::unique(User::class)],
+        'address' => ['required', 'string', 'max:50'],
+    ]);
+
+    // Gunakan Database Transaction untuk keamanan data
+    return DB::transaction(function () use ($validated) {
+        
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'phone' => $validated['phone'],
+            'address' => $validated['address'],
+            'role' => Role::CUSTOMER->value, 
         ]);
 
-        Log::info('Validasi registrasi berhasil dilewati');
+        // Memicu event Registered
+        // Event ini akan secara otomatis memanggil sendEmailVerificationNotification() 
+        // yang sudah kita masukkan ke Queue di Model User.
+        event(new Registered($user));
 
-        // DB::beginTransaction();
+        Log::info('User berhasil dibuat dan email masuk antrean queue', ['user_id' => $user->id]);
 
-        // try {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'phone' => $validated['phone'],
-                'address' => $validated['address'],
-                'role' => Role::CUSTOMER->value, 
-            ]);
-            event(new Registered($user));
-            Log::info('User berhasil dibuat di memori sementara', ['user_id' => $user->id]);
-
-            // $emailVerif = $user->sendEmailVerificationNotification();
-
-        // if (! $emailVerif) {
-        //     DB::rollBack();
-            
-        //     Log::error('Gagal mengirim email verifikasi, user batal dibuat', ['user_id' => $user->id]);
-            
-        //     return back()->withInput()->withErrors([
-        //         'email' => 'Gagal mengirim email verifikasi. Silakan coba beberapa saat lagi.'
-        //     ]);
-            
-        // } else {
-            // DB::commit();
-            
-            Log::info('Email verifikasi berhasil dikirim', ['user_id' => $user->id]);
-
-            return redirect()->route('verification.notice.unauthenticated', [
-                'id' => $user->id,
-                'hash' => sha1($user->getEmailForVerification()),
-            ]);
-        // }
-
-        // } catch (Exception $e) {
-        //     DB::rollBack();
-
-        //     Log::error('Registrasi dibatalkan karena gagal mengirim email', [
-        //         'email' => $request->email,
-        //         'error_message' => $e->getMessage()
-        //     ]);
-
-        //     return back()->withInput()->withErrors([
-        //         'email' => 'Sistem kami sedang mengalami gangguan saat mengirim email verifikasi. Silakan coba beberapa saat lagi.'
-        //     ]);
-        // }
-    }
+        // Redirect langsung ke halaman verifikasi
+        // Pengguna tidak perlu menunggu email terkirim karena prosesnya sudah di Queue
+        return redirect()->route('verification.notice.unauthenticated', [
+            'id' => $user->id,
+            'hash' => sha1($user->getEmailForVerification()),
+        ]);
+    });
+}
 }
