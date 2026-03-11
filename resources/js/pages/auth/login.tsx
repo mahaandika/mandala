@@ -19,7 +19,7 @@ interface LoginProps {
 export default function Login({
     status,
     canResetPassword,
-    canRegister,
+    // canRegister,
 }: LoginProps) {
     const { errors } = usePage().props;
     return (
@@ -116,14 +116,12 @@ export default function Login({
                             </Button>
                         </div>
 
-                        {canRegister && (
-                            <div className="text-center text-sm text-muted-foreground">
-                                Don't have an account?{' '}
-                                <TextLink href={register()} tabIndex={5}>
-                                    Sign up
-                                </TextLink>
-                            </div>
-                        )}
+                        <div className="text-center text-sm text-muted-foreground">
+                            Don't have an account?{' '}
+                            <TextLink href={register()} tabIndex={5}>
+                                Sign up
+                            </TextLink>
+                        </div>
                     </>
                 )}
             </Form>
