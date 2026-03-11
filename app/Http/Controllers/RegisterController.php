@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\Role;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
@@ -16,7 +18,6 @@ class RegisterController extends Controller
     {
         Log::info('Proses registrasi manual dimulai', ['email' => $request->email]);
 
-        // 1. Validasi Input Manual
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'min:5'],
             'email' => [
@@ -33,29 +34,41 @@ class RegisterController extends Controller
 
         Log::info('Validasi registrasi berhasil dilewati');
 
-        // 2. Buat User Baru
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'phone' => $validated['phone'],
-            'address' => $validated['address'],
-            'role' => Role::CUSTOMER->value, 
-        ]);
+        DB::beginTransaction();
 
-        Log::info('User berhasil dibuat ke dalam database', ['user_id' => $user->id]);
-        
-        $emailVerif = $user->sendEmailVerificationNotification();
-        if (! $emailVerif) {
-            Log::error('Gagal mengirim email verifikasi', ['user_id' => $user->id]);
-        }else {
+        try {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'phone' => $validated['phone'],
+                'address' => $validated['address'],
+                'role' => Role::CUSTOMER->value, 
+            ]);
+
+            Log::info('User berhasil dibuat di memori sementara', ['user_id' => $user->id]);
+
+            $user->sendEmailVerificationNotification();
+
             Log::info('Email verifikasi berhasil dikirim', ['user_id' => $user->id]);
-        }
+            DB::commit();
 
-        // 4. Redirect ke Route Verification Notice
-        return redirect()->route('verification.notice.unauthenticated', [
-            'id' => $user->id,
-            'hash' => sha1($user->getEmailForVerification()),
-        ]);
+            return redirect()->route('verification.notice.unauthenticated', [
+                'id' => $user->id,
+                'hash' => sha1($user->getEmailForVerification()),
+            ]);
+
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            Log::error('Registrasi dibatalkan karena gagal mengirim email', [
+                'email' => $request->email,
+                'error_message' => $e->getMessage()
+            ]);
+
+            return back()->withInput()->withErrors([
+                'email' => 'Sistem kami sedang mengalami gangguan saat mengirim email verifikasi. Silakan coba beberapa saat lagi.'
+            ]);
+        }
     }
 }
