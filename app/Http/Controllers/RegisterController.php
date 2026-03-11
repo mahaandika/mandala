@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Role;
 use App\Models\User;
 use Exception;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -45,7 +46,7 @@ class RegisterController extends Controller
                 'address' => $validated['address'],
                 'role' => Role::CUSTOMER->value, 
             ]);
-
+            event(new Registered($user));
             Log::info('User berhasil dibuat di memori sementara', ['user_id' => $user->id]);
 
             // $emailVerif = $user->sendEmailVerificationNotification();
