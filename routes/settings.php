@@ -16,7 +16,7 @@ Route::post('/register', [RegisterController::class, 'store'])->name('register.s
 
 Route::get('/email/verify-notice/{id}/{hash}', function ($id, $hash) {
     // Lakukan redirect biasa ke URL baru sambil membawa data
-    return redirect()->to("/auth/verify-email?id={$id}&hash={$hash}");
+    return Inertia::render('auth/verify-email'); 
 })->name('verification.notice.unauthenticated');
 
 // 2. Route baru untuk merender halamannya
