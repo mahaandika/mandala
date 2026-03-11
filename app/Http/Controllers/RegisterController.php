@@ -44,7 +44,13 @@ class RegisterController extends Controller
         ]);
 
         Log::info('User berhasil dibuat ke dalam database', ['user_id' => $user->id]);
-
+        
+        $emailVerif = $user->sendEmailVerificationNotification();
+        if (! $emailVerif) {
+            Log::error('Gagal mengirim email verifikasi', ['user_id' => $user->id]);
+        }else {
+            Log::info('Email verifikasi berhasil dikirim', ['user_id' => $user->id]);
+        }
 
         // 4. Redirect ke Route Verification Notice
         return redirect()->route('verification.notice.unauthenticated', [
