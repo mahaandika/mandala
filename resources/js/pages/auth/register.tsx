@@ -1,5 +1,4 @@
 import { login } from '@/routes';
-import { store } from '@/routes/register';
 import { Head, useForm } from '@inertiajs/react';
 
 import InputError from '@/components/input-error';
@@ -42,7 +41,7 @@ export default function Register() {
         }
 
         // 3. Kirim ke Backend jika valid
-        post(store().url, {
+        post(`/register`, {
             onSuccess: () => reset('password', 'password_confirmation'),
         });
     };
