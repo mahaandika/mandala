@@ -48,15 +48,27 @@ class RegisterController extends Controller
 
             Log::info('User berhasil dibuat di memori sementara', ['user_id' => $user->id]);
 
-            $user->sendEmailVerificationNotification();
+            $emailVerif = $user->sendEmailVerificationNotification();
 
-            Log::info('Email verifikasi berhasil dikirim', ['user_id' => $user->id]);
+        if (! $emailVerif) {
+            DB::rollBack();
+            
+            Log::error('Gagal mengirim email verifikasi, user batal dibuat', ['user_id' => $user->id]);
+            
+            return back()->withInput()->withErrors([
+                'email' => 'Gagal mengirim email verifikasi. Silakan coba beberapa saat lagi.'
+            ]);
+            
+        } else {
             DB::commit();
+            
+            Log::info('Email verifikasi berhasil dikirim', ['user_id' => $user->id]);
 
             return redirect()->route('verification.notice.unauthenticated', [
                 'id' => $user->id,
                 'hash' => sha1($user->getEmailForVerification()),
             ]);
+        }
 
         } catch (Exception $e) {
             DB::rollBack();
