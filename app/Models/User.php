@@ -43,6 +43,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new \Illuminate\Auth\Notifications\VerifyEmail);
+    }
+
     /**
      * Get the attributes that should be cast.
      *
