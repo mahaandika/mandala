@@ -1,5 +1,5 @@
 import { login } from '@/routes';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -43,7 +43,10 @@ export default function Register() {
 
         // 3. Kirim ke Backend jika valid
         post(`/register`, {
-            onSuccess: () => reset('password', 'password_confirmation'),
+            onSuccess: () => {
+                reset('password', 'password_confirmation');
+                router.reload();
+            },
         });
     };
 
