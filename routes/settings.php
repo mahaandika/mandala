@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\TwoFactorAuthenticationController;
@@ -7,6 +8,11 @@ use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Request;
+
+Route::get('/register', function () {
+    return Inertia::render('auth/register'); 
+})->middleware('guest')->name('register');
+Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
 
 Route::get('/email/verify-notice/{id}/{hash}', function ($id, $hash) {
     // Lakukan redirect biasa ke URL baru sambil membawa data
