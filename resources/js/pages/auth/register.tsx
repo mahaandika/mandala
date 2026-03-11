@@ -27,6 +27,7 @@ export default function Register() {
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (processing) return;
         // 1. Reset error phone sebelum validasi ulang
         // agar jika sebelumnya ada error, bisa hilang dulu
         setError('phone', '');
