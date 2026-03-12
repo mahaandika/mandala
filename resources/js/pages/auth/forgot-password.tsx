@@ -40,7 +40,20 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     placeholder="email@example.com"
                                 />
 
-                                <InputError message={errors.email} />
+                                <InputError
+                                    message={
+                                        errors.email?.includes('wait')
+                                            ? 'Mohon periksa email Anda.'
+                                            : errors.email
+                                    }
+                                    // Jika Anda ingin mengubah warnanya khusus untuk pesan 'wait',
+                                    // Anda bisa menambahkan className jika komponen InputError mendukungnya
+                                    className={
+                                        errors.email?.includes('wait')
+                                            ? 'font-medium text-green-500'
+                                            : 'text-red-500'
+                                    }
+                                />
                             </div>
 
                             <div className="my-6 flex items-center justify-start">
