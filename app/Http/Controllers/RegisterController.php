@@ -40,7 +40,7 @@ public function store(Request $request)
         if ($existingUnverifiedUser) {
             // Berhenti di sini dan balikan error ke field email
             throw ValidationException::withMessages([
-                'email' => ['Email atau nomor telepon sudah terdaftar tetapi belum diverifikasi.'],
+                // 'email' => ['Email atau nomor telepon sudah terdaftar tetapi belum diverifikasi.'],
                 'requires_verification' => true,
                 'verification_id' => $existingUnverifiedUser->id,
                 'verification_hash' => sha1($existingUnverifiedUser->getEmailForVerification()),
