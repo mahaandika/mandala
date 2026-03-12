@@ -55,14 +55,14 @@ export default function Register() {
         >
             <Head title="Register" />
             {pageErrors.requires_verification && (
-                <div className="mb-6 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-center">
-                    <p className="mb-2 text-sm text-yellow-700">
+                <div className="mb-6 rounded-md border border-green-200 bg-green-50 p-4 text-center">
+                    <p className="mb-2 text-sm text-green-700">
                         Email Anda sudah terdaftar, cek email anda untuk
                         verifikasi akun.
                     </p>
                     <Link
                         href={`/email/verify-notice/${pageErrors.verification_id}/${pageErrors.verification_hash}`}
-                        className="text-sm font-bold text-yellow-800 underline"
+                        className="text-sm font-bold text-green-800 underline"
                     >
                         Verifikasi Sekarang
                     </Link>
