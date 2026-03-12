@@ -399,8 +399,8 @@ export default function Index() {
                 earliestFutureResTime,
                 now,
             );
-            const BUFFER = 30;
-            const MIN_DURATION = 45;
+            const BUFFER = 10;
+            const MIN_DURATION = 20;
 
             if (minutesUntilNext - BUFFER < MIN_DURATION) {
                 alert(`Waktu mepet! Sisa ${minutesUntilNext} menit.`);
