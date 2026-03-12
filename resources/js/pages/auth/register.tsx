@@ -57,8 +57,8 @@ export default function Register() {
             {pageErrors.requires_verification && (
                 <div className="mb-6 rounded-md border border-green-200 bg-green-50 p-4 text-center">
                     <p className="mb-2 text-sm text-green-700">
-                        Email Anda sudah terdaftar, cek email anda untuk
-                        verifikasi akun.
+                        Registrasi berhasil, cek email anda untuk verifikasi
+                        akun.
                     </p>
                     <Link
                         href={`/email/verify-notice/${pageErrors.verification_id}/${pageErrors.verification_hash}`}
