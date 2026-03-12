@@ -156,7 +156,7 @@ export default function Welcome() {
                                 dining experience in Nusa Dua. Sip, savor, and
                                 unwind.
                             </p>
-                            <Link href="/menu">
+                            <Link href="/menus">
                                 <button className="group flex cursor-pointer items-center gap-4 border border-[#9c6b3b]/50 px-8 py-5 text-xs tracking-[0.2em] text-white uppercase transition-all duration-500 hover:bg-[#9c6b3b]">
                                     Discover Our Menu
                                     <span className="h-[1px] w-12 bg-white/50 transition-colors group-hover:bg-white"></span>
