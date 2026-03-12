@@ -49,14 +49,13 @@ public function store(Request $request)
         // Gunakan Database Transaction untuk keamanan data
         // return DB::transaction(function () use ($validated) {
             
-            $user = User::Create([
-                'email' => $validated['email'],
-                'email_verified_at' => null],[
+            $user = User::create([
                 'name' => $validated['name'],
+                'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'phone' => $validated['phone'],
                 'address' => $validated['address'],
-                'role' => Role::CUSTOMER->value, 
+                'role' => Role::CUSTOMER->value,
             ]);
 
             // Memicu event Registered
