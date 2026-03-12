@@ -1,5 +1,5 @@
 import { login } from '@/routes';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -9,10 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 
+import { Link } from 'lucide-react';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 export default function Register() {
+    const { errors: pageErrors } = usePage().props;
     const { data, setData, post, processing, errors, reset, setError } =
         useForm({
             name: '',
@@ -43,13 +45,7 @@ export default function Register() {
 
         // 3. Kirim ke Backend jika valid
         post(`/register`, {
-            onSuccess: () => {
-                reset('password', 'password_confirmation');
-            },
-            onError: () => {
-                reset('password', 'password_confirmation');
-                router.reload();
-            },
+            onSuccess: () => reset('password', 'password_confirmation'),
         });
     };
 
@@ -59,6 +55,20 @@ export default function Register() {
             description="Enter your details below to create your account"
         >
             <Head title="Register" />
+            {pageErrors.requires_verification && (
+                <div className="mb-6 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-center">
+                    <p className="mb-2 text-sm text-yellow-700">
+                        Email Anda sudah terdaftar, cek email anda untuk
+                        verifikasi akun.
+                    </p>
+                    <Link
+                        href={`/email/verify-notice/${pageErrors.verification_id}/${pageErrors.verification_hash}`}
+                        className="text-sm font-bold text-yellow-800 underline"
+                    >
+                        Verifikasi Sekarang
+                    </Link>
+                </div>
+            )}
 
             <form onSubmit={submit} className="flex flex-col gap-6">
                 <div className="grid gap-6">
