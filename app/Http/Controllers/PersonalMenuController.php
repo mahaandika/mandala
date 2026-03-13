@@ -36,7 +36,7 @@ class PersonalMenuController extends Controller
             },
         ])
             ->where('is_active', 1)
-            ->get(['id', 'name', 'label', 'selection_mode', 'selection_type']);
+            ->get(['id', 'name', 'description', 'selection_mode', 'selection_type']);
 
         $menus = Menu::whereDoesntHave('personalizationOptions')
             ->select('id', 'name')
