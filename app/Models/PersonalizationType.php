@@ -16,6 +16,10 @@ class PersonalizationType extends Model
         'is_active',
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
     public function personalizationOptions()
     {
         return $this->hasMany(PersonalizationOption::class);
