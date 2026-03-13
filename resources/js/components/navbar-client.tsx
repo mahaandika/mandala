@@ -194,25 +194,32 @@ export default function NavbarClient() {
                             CART
                         </Link>
                     </li>
+                    <li>
+                        <Link
+                            onClick={() => setOpen(false)}
+                            href="/historys"
+                            className={menuClass('/historys')}
+                        >
+                            History
+                        </Link>
+                    </li>
 
                     {auth.user ? (
                         <li>
                             <Link
-                                onClick={() => setOpen(false)}
-                                href="/historys"
-                                className={menuClass('/history')}
+                                href={logout()}
+                                className={menuClass('/logout')}
                             >
-                                HISTORY
+                                LOGOUT
                             </Link>
                         </li>
                     ) : (
                         <li>
                             <Link
-                                onClick={() => setOpen(false)}
-                                href="/login"
+                                href="/register"
                                 className={menuClass('/login')}
                             >
-                                LOGIN
+                                REGISTER
                             </Link>
                         </li>
                     )}
