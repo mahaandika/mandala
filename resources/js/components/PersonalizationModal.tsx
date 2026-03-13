@@ -11,7 +11,7 @@ type PersonalizationOption = {
 type PersonalizationType = {
     id: number;
     name: string;
-    label: string;
+    description: string;
     selection_mode: 'include' | 'exclude';
     selection_type: 'single' | 'multiple';
     personalization_options: PersonalizationOption[];
@@ -84,7 +84,7 @@ export default function PersonalizationModal({
                                 </h4>
                             </div>
                             <p className="mb-6 text-sm font-light text-gray-300">
-                                {type.label}
+                                {type.description}
                             </p>
                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                                 {type.personalization_options.map((opt) => {
