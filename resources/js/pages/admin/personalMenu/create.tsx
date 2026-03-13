@@ -20,7 +20,7 @@ type PersonalizationOption = {
 type PersonalizationType = {
     id: number;
     name: string;
-    label: string;
+    description: string;
     selection_mode: 'include' | 'exclude';
     selection_type: 'single' | 'multiple';
     icon?: string;
