@@ -8,7 +8,7 @@ import {
     AlertCircle,
     CheckCircle2,
     Loader2,
-    LogIn, // <--- Ditambahkan
+    LogIn,
     Search,
     Settings2,
     X,
@@ -29,7 +29,7 @@ type Menu = {
 type Category = {
     id: number;
     name: string;
-    description?: string; // Opsional jika ada
+    description?: string;
 };
 
 type PaginationLink = {
@@ -59,7 +59,7 @@ type PersonalizationType = {
 type PageProps = {
     menus: Pagination<Menu>;
     personalized_menus: Menu[];
-    user_selected_ids: number[]; // ID yang sudah dipilih user di DB
+    user_selected_ids: number[];
     categories: Category[];
     personalizations: PersonalizationType[];
     filters: {
@@ -90,7 +90,7 @@ export default function Menus() {
 
     // Modal & Personalization State
     const [showPersonalizeModal, setShowPersonalizeModal] = useState(false);
-    const [showLoginModal, setShowLoginModal] = useState(false); // <--- State baru untuk Modal Login
+    const [showLoginModal, setShowLoginModal] = useState(false);
 
     const [selectedOptionIds, setSelectedOptionIds] = useState<number[]>(
         user_selected_ids || [],
@@ -104,7 +104,6 @@ export default function Menus() {
     } | null>(null);
 
     /* ================= EFFECT ================= */
-    // Sync state ketika data dari server (user_selected_ids) berubah
     useEffect(() => {
         setSelectedOptionIds(user_selected_ids || []);
     }, [user_selected_ids]);
@@ -173,7 +172,6 @@ export default function Menus() {
     };
 
     const handleAddToCart = (menu: Menu) => {
-        // PERUBAHAN DI SINI: Cek login dulu, tampilkan modal jika belum login
         if (!auth?.user) {
             setShowLoginModal(true);
             return;
@@ -237,6 +235,7 @@ export default function Menus() {
                     <img
                         src="/images/wine-putih.jpg"
                         className="h-full w-full object-cover opacity-60"
+                        alt="Menu Background"
                     />
                     <div className="absolute inset-0 bg-black/40" />
                 </div>
@@ -244,14 +243,17 @@ export default function Menus() {
                     <h1 className="font-serif text-5xl tracking-wide text-white md:text-6xl">
                         Our Menu
                     </h1>
-                    {auth.user && (
-                        <button
-                            onClick={() => setShowPersonalizeModal(true)}
-                            className="mt-8 flex items-center gap-3 bg-[#9c6b3b] px-8 py-4 text-xs tracking-[0.2em] text-white uppercase transition-all hover:bg-[#b07a43]"
-                        >
-                            <Settings2 size={16} /> Change Your Personalization
-                        </button>
-                    )}
+
+                    {/* PERUBAHAN: Tombol selalu tampil untuk Guest maupun Auth */}
+                    <button
+                        onClick={() => setShowPersonalizeModal(true)}
+                        className="mt-8 flex items-center gap-3 bg-[#9c6b3b] px-8 py-4 text-xs tracking-[0.2em] text-white uppercase transition-all hover:bg-[#b07a43]"
+                    >
+                        <Settings2 size={16} />{' '}
+                        {user_selected_ids && user_selected_ids.length > 0
+                            ? 'Change Your Personalization'
+                            : 'Set Personalization'}
+                    </button>
                 </div>
                 <div className="absolute bottom-0 h-32 w-full bg-gradient-to-t from-[#02080c] to-transparent" />
             </section>
@@ -309,8 +311,9 @@ export default function Menus() {
                 </div>
 
                 <div className="mx-auto mt-16 max-w-7xl space-y-28">
-                    {/* --- SECTION 1: YOUR FOOD PREFERENCES (Login Only) --- */}
-                    {auth.user && (
+                    {/* --- SECTION 1: YOUR FOOD PREFERENCES --- */}
+                    {/* PERUBAHAN: Tampil untuk semua user asalkan punya preferensi (length > 0) */}
+                    {user_selected_ids && user_selected_ids.length > 0 && (
                         <div>
                             <div className="mb-10 flex items-center gap-4">
                                 <h2 className="font-serif text-3xl tracking-wide text-white">
@@ -397,16 +400,14 @@ export default function Menus() {
 
             <FooterClient />
 
-            {/* --- MODAL KONFIRMASI LOGIN  */}
+            {/* --- MODAL KONFIRMASI LOGIN  --- */}
             {showLoginModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-                    {/* Backdrop */}
                     <div
                         className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
                         onClick={() => setShowLoginModal(false)}
                     />
 
-                    {/* Modal Content */}
                     <div className="relative w-full max-w-md animate-in overflow-hidden rounded-lg border border-[#9c6b3b]/30 bg-[#0a1219] p-8 text-center shadow-2xl duration-200 zoom-in-95 fade-in">
                         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#9c6b3b]/10">
                             <LogIn className="text-[#9c6b3b]" size={32} />

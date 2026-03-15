@@ -7,9 +7,11 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Enums\Role;
 use App\Http\Responses\RegisterResponse as ResponsesRegisterResponse;
 use App\Models\User;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
@@ -91,6 +93,23 @@ class FortifyServiceProvider extends ServiceProvider
                 }
 
                 return $user;
+            }
+        });
+        Event::listen(function (Login $event) {
+            $request = request();
+            
+            // Cek apakah ada session guest nyangkut di browser ini
+            if ($request->session()->has('guest_personalizations')) {
+                $user = $event->user;
+
+                // Skenario B: Preferensi User DB Menang. 
+                // Kita HANYA isi jika user ini belum punya personalisasi sama sekali.
+                if (!$user->personalizations()->exists()) {
+                    $user->personalizations()->sync($request->session()->get('guest_personalizations'));
+                }
+
+                // Apapun yang terjadi, bersihkan session guest saat login!
+                $request->session()->forget('guest_personalizations');
             }
         });
     }

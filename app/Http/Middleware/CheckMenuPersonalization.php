@@ -17,29 +17,32 @@ class CheckMenuPersonalization
      */
     public function handle(Request $request, Closure $next)
     {
+        $needsPersonalization = false;
+
         if (Auth::check()) {
-            $user = Auth::user();
+            // Cek DB untuk user yang login
+            $needsPersonalization = !Auth::user()->personalizations()->exists();
+        } else {
+            // Cek Session untuk guest
+            $needsPersonalization = !$request->session()->has('guest_personalizations');
+        }
 
-            // Cek apakah user sudah punya personalisasi
-            if (! $user->personalizations()->exists()) {
-
-                // 1. Jika user sedang TIDAK di halaman utama (root /)
-                // Maka paksa redirect ke halaman /
-                if (! $request->is('/')) {
-                    return redirect('/')->with('info', 'Please complete your personalization first.');
-                }
-
-                // 2. Jika user sudah di halaman /, kirim data untuk modal
-                Inertia::share('personalization_list', function () {
-                    return PersonalizationType::with(['personalizationOptions' => function ($query) {
-                        $query->where('is_active', true);
-                    }])
-                        ->where('is_active', true)
-                        ->get();
-                });
-
-                Inertia::share('must_personalize', true);
+        if ($needsPersonalization) {
+            // 1. Jika sedang TIDAK di halaman utama, paksa redirect ke /
+            if (! $request->is('/')) {
+                return redirect('/')->with('info', 'Please complete your personalization first.');
             }
+
+            // 2. Jika di halaman /, kirim data untuk modal
+            Inertia::share('personalization_list', function () {
+                return PersonalizationType::with(['personalizationOptions' => function ($query) {
+                    $query->where('is_active', true);
+                }])
+                ->where('is_active', true)
+                ->get();
+            });
+
+            Inertia::share('must_personalize', true);
         }
 
         return $next($request);

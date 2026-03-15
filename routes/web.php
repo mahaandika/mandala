@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
+ Route::post('/personalization/save', [PersonalizationUserController::class, 'savePersonalization']);
 Route::middleware(['checkPersonalization'])->group(function () {
     Route::get('/', function () {
         return Inertia::render('welcome', [
@@ -70,7 +71,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/payment-finish/{booking}', [PaymentController::class, 'paymentFinish'])->name('payment-finish');
     Route::get('/historys', [HistoryController::class, 'index'])->name('historys');
 
-    Route::post('/personalization/save', [PersonalizationUserController::class, 'savePersonalization']);
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'isReceptionis'])->group(function () {

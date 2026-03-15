@@ -61,6 +61,12 @@ public function store(Request $request)
             // Memicu event Registered
             // Event ini akan secara otomatis memanggil sendEmailVerificationNotification() 
             // yang sudah kita masukkan ke Queue di Model User.
+            if ($request->session()->has('guest_personalizations')) {
+                $user->personalizations()->sync($request->session()->get('guest_personalizations'));
+                
+                // Bersihkan session guest agar tidak menempel
+                $request->session()->forget('guest_personalizations');
+            }
             event(new Registered($user));
 
             Log::info('User berhasil dibuat dan email masuk antrean queue', ['user_id' => $user->id]);

@@ -124,91 +124,93 @@ class MenuController extends Controller
     }
 
     public function menuClient(Request $request)
-    {
-        // --- 1. QUERY UNTUK ALL MENUS (Pagination) ---
-        $allQuery = Menu::query()->where('is_active', true);
+{
+    // --- 1. QUERY UNTUK ALL MENUS (Pagination) ---
+    $allQuery = Menu::query()->where('is_active', true);
 
-        if ($request->filled('search')) {
-            $allQuery->where('name', 'like', '%'.$request->search.'%');
-        }
-
-        if ($request->filled('category')) {
-            $allQuery->where('category_id', $request->category);
-        }
-
-        // --- 2. QUERY UNTUK YOUR PREFERENCES (Berdasarkan DB User) ---
-        $prefMenus = collect();
-        $userPersonalizations = collect();
-        if (Auth::check()) {
-            /**
-             * @var /App/Models
-             */
-            $user = Auth::user();
-            $prefQuery = Menu::query()->where('is_active', true);
-            $userPersonalizations = $user->personalizations()->get();
-            $selectedOptionIds = $userPersonalizations->pluck('id')->toArray();
-            // Ambil preferensi user dari DB, kelompokkan berdasarkan tipe (untuk logika include/exclude)
-            $userOptions = PersonalizationOption::with('personalizationType')
-                ->whereHas('users', fn ($q) => $q->where('user_id', $user->id))
-                ->get()
-                ->groupBy('personalization_type_id');
-
-            if ($userOptions->isNotEmpty()) {
-                // Inisialisasi array untuk menampung ID include dan exclude
-                $allIncludeIds = [];
-                $allExcludeIds = [];
-
-                foreach ($userOptions as $options) {
-                    $type = $options->first()->personalizationType;
-                    $optionIds = $options->pluck('id')->toArray();
-
-                    if ($type->selection_mode === 'include') {
-                        // Kumpulkan semua ID yang user inginkan (Flavor Savory, Creamy, dll)
-                        $allIncludeIds = array_merge($allIncludeIds, $optionIds);
-                    } else {
-                        // Kumpulkan semua ID yang user hindari (Alergi, dll)
-                        $allExcludeIds = array_merge($allExcludeIds, $optionIds);
-                    }
-                }
-
-                // --- LOGIKA INCLUDE (Logika OR) ---
-                if (! empty($allIncludeIds)) {
-                    $prefQuery->whereHas('personalizationOptions', function ($q) use ($allIncludeIds) {
-                        // Ini akan mengambil menu yang punya SETIDAKNYA satu dari ID yang dipilih
-                        $q->whereIn('personalization_option_id', $allIncludeIds);
-                    });
-                }
-
-                // --- LOGIKA EXCLUDE (Logika AND untuk keamanan) ---
-                if (! empty($allExcludeIds)) {
-                    // Menu yang mengandung salah satu dari yang dihindari tidak akan tampil
-                    $prefQuery->whereDoesntHave('personalizationOptions', function ($q) use ($allExcludeIds) {
-                        $q->whereIn('personalization_option_id', $allExcludeIds);
-                    });
-                }
-
-                // Filter tambahan (Search & Category)
-                if ($request->filled('search')) {
-                    $prefQuery->where('name', 'like', '%'.$request->search.'%');
-                }
-                if ($request->filled('category')) {
-                    $prefQuery->where('category_id', $request->category);
-                }
-
-                $prefMenus = $prefQuery->orderBy('name')->get();
-            }
-        }
-
-        return Inertia::render('menus', [
-            'menus' => $allQuery->orderBy('name')->paginate(6)->withQueryString(),
-            'personalized_menus' => $prefMenus, // Data hasil filter DB
-            'user_selected_ids' => $userPersonalizations->pluck('id'),
-            'categories' => Category::where('is_active', true)->orderBy('name')->get(),
-            'personalizations' => PersonalizationType::with(['personalizationOptions' => fn ($q) => $q->where('is_active', true)])
-                ->where('is_active', true)->get(),
-            'filters' => $request->only(['search', 'category']),
-        ]);
+    if ($request->filled('search')) {
+        $allQuery->where('name', 'like', '%'.$request->search.'%');
     }
+
+    if ($request->filled('category')) {
+        $allQuery->where('category_id', $request->category);
+    }
+
+    // --- 2. QUERY UNTUK YOUR PREFERENCES (Auth User & Guest) ---
+    $prefMenus = collect();
+    $selectedOptionIds = []; // Variabel untuk menampung ID pilihan
+
+    // Tentukan darimana data preferensi diambil
+    if (Auth::check()) {
+        // Jika Auth: Ambil dari DB User (menggunakan property collection agar aman dari ambiguity pivot)
+        $selectedOptionIds = Auth::user()->personalizations->pluck('id')->toArray();
+    } elseif ($request->session()->has('guest_personalizations')) {
+        // Jika Guest: Ambil dari Session
+        $selectedOptionIds = $request->session()->get('guest_personalizations');
+    }
+
+    // Jika user/guest memiliki preferensi yang dipilih, jalankan query
+    if (!empty($selectedOptionIds)) {
+        $prefQuery = Menu::query()->where('is_active', true);
+
+        // Langsung cari Option berdasarkan ID yang terkumpul (Lebih rapi dan bisa dipakai untuk Auth/Guest)
+        $userOptions = PersonalizationOption::with('personalizationType')
+            ->whereIn('id', $selectedOptionIds)
+            ->get();
+
+        if ($userOptions->isNotEmpty()) {
+            $allIncludeIds = [];
+            $allExcludeIds = [];
+
+            // Pisahkan ID berdasarkan selection_mode
+            foreach ($userOptions as $option) {
+                $type = $option->personalizationType;
+
+                if ($type && $type->selection_mode === 'exclude') {
+                    $allExcludeIds[] = $option->id;
+                } else {
+                    $allIncludeIds[] = $option->id;
+                }
+            }
+
+            // --- LOGIKA INCLUDE (Logika OR) ---
+            if (!empty($allIncludeIds)) {
+                $prefQuery->whereHas('personalizationOptions', function ($q) use ($allIncludeIds) {
+                    // Pakai nama_tabel.id agar tidak ambigu dengan id pivot
+                    $q->whereIn('personalization_options.id', $allIncludeIds); 
+                });
+            }
+
+            // --- LOGIKA EXCLUDE (Logika AND untuk keamanan) ---
+            if (!empty($allExcludeIds)) {
+                $prefQuery->whereDoesntHave('personalizationOptions', function ($q) use ($allExcludeIds) {
+                    $q->whereIn('personalization_options.id', $allExcludeIds);
+                });
+            }
+
+            // Filter tambahan (Search & Category)
+            if ($request->filled('search')) {
+                $prefQuery->where('name', 'like', '%'.$request->search.'%');
+            }
+            if ($request->filled('category')) {
+                $prefQuery->where('category_id', $request->category);
+            }
+
+            $prefMenus = $prefQuery->orderBy('name')->get();
+        }
+    }
+
+    // --- 3. RETURN RESPONSE ---
+    return Inertia::render('menus', [
+        'menus' => $allQuery->orderBy('name')->paginate(6)->withQueryString(),
+        'personalized_menus' => $prefMenus, 
+        'user_selected_ids' => $selectedOptionIds, // Dikirim ke front-end agar ter-checklist otomatis
+        'categories' => Category::where('is_active', true)->orderBy('name')->get(),
+        'personalizations' => PersonalizationType::with(['personalizationOptions' => fn ($q) => $q->where('is_active', true)])
+            ->where('is_active', true)->get(),
+        'filters' => $request->only(['search', 'category']),
+    ]);
+}
 
     public function getMenus(Request $request)
     {
