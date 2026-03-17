@@ -34,13 +34,13 @@ class CartsController extends Controller
             
             // 1. Cek Minimal Meja
             if ($tableIds->isEmpty()) {
-                $validation['errors'][] = 'Syarat reservasi: Anda harus memilih minimal 1 meja.';
+                $validation['errors'][] = 'Syarat reservasi: Anda harus memilih minimal 1 menu dan 1 meja.';
                 $validation['can_checkout'] = false;
             }
 
             // 2. Cek Minimal Menu
             if ($itemCount === 0) {
-                $validation['errors'][] = 'Syarat reservasi: Anda harus memesan minimal 1 menu makanan/minuman.';
+                $validation['errors'][] = 'Syarat reservasi: Anda harus memesan minimal 1 menu dan 1 meja.';
                 $validation['can_checkout'] = false;
             }
 
