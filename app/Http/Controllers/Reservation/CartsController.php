@@ -12,85 +12,105 @@ use Inertia\Inertia;
 class CartsController extends Controller
 {
     public function showCart()
-{
-    $booking = Booking::with(['user', 'tables', 'items.menu' => function ($query) {
-            $query->withTrashed();
+    {
+        $booking = Booking::with(['user', 'tables', 'items.menu' => function ($query) {
+            $query->withTrashed(); // Menarik data menu meskipun sudah dihapus (soft delete)
         }])
-        ->where('user_id', Auth::user()->id)
-        ->where('booking_status', 'pending')
-        ->first();
+            ->where('user_id', Auth::user()->id)
+            ->where('booking_status', 'pending')
+            ->first();
 
-    $validation = [
-        'can_checkout' => true,
-        'warnings' => [],
-        'errors' => [],
-    ];
+        $validation = [
+            'can_checkout' => true,
+            'warnings' => [],
+            'errors' => [],
+        ];
 
-    if ($booking) {
-        $tableIds = $booking->tables->pluck('id');
-        $itemCount = $booking->items->count(); // Hitung jumlah menu yang dipesan
-
-        // --- VALIDASI SYARAT DASAR ---
-        
-        // 1. Cek Minimal Meja
-        if ($tableIds->isEmpty()) {
-            $validation['errors'][] = 'Syarat reservasi: Anda harus memilih minimal 1 meja.';
-            $validation['can_checkout'] = false;
-        }
-
-        // 2. Cek Minimal Menu
-        if ($itemCount === 0) {
-            $validation['errors'][] = 'Syarat reservasi: Anda harus memesan minimal 1 menu makanan/minuman.';
-            $validation['can_checkout'] = false;
-        }
-
-        // --- VALIDASI LANJUTAN (Hanya jika meja sudah ada dan belum ada error dasar) ---
-        if ($tableIds->isNotEmpty() && $validation['can_checkout']) {
+        if ($booking) {
+            $tableIds = $booking->tables->pluck('id');
             
-            $bookingDateTime = \Carbon\Carbon::parse($booking->booking_date->format('Y-m-d').' '.$booking->booking_time);
+            // TAMBAHKAN PENGECEKAN INI:
+            // Hanya jalankan validasi jika sudah ada meja yang dipilih
+            if ($tableIds->isNotEmpty()) {
+                
+                // Pastikan format date & time digabung untuk perbandingan objek Carbon
+                $bookingDateTime = \Carbon\Carbon::parse($booking->booking_date->format('Y-m-d').' '.$booking->booking_time);
 
-            // Validasi Waktu Lampau
-            if ($bookingDateTime->isPast()) {
-                $validation['errors'][] = 'Waktu reservasi sudah terlewat. Silakan tentukan ulang waktu reservasi Anda.';
-                $validation['can_checkout'] = false;
-            }
+                if ($bookingDateTime->isPast()) {
+                    $validation['errors'][] = 'Waktu reservasi ('.$bookingDateTime->format('H:i').') sudah terlewat. Silakan batalkan dan buat reservasi baru dengan waktu yang tersedia.';
+                    $validation['can_checkout'] = false;
+                }
 
-            // Validasi Bentrok (Conflict) Meja
-            if ($validation['can_checkout']) {
-                $conflictingBookings = Booking::whereHas('tables', function ($q) use ($tableIds) {
+                if ($validation['can_checkout']) {
+                    $conflictingBookings = Booking::whereHas('tables', function ($q) use ($tableIds) {
                         $q->whereIn('restaurant_tables.id', $tableIds);
                     })
-                    ->where('id', '!=', $booking->id)
-                    ->whereDate('booking_date', $booking->booking_date)
-                    ->whereIn('booking_status', ['reserve', 'seated'])
-                    ->with('tables')
-                    ->get();
+                        ->where('id', '!=', $booking->id)
+                        ->whereDate('booking_date', $booking->booking_date)
+                        ->whereIn('booking_status', ['reserve', 'seated'])
+                        ->with('tables')
+                        ->get();
 
-                foreach ($booking->tables as $table) {
-                    foreach ($conflictingBookings as $conflict) {
-                        if ($conflict->tables->contains('id', $table->id)) {
-                            $otherTime = \Carbon\Carbon::parse($conflict->booking_date->format('Y-m-d').' '.$conflict->booking_time);
-                            $diffInMinutes = $otherTime->diffInMinutes($bookingDateTime, false);
+                    foreach ($booking->tables as $table) {
+                        foreach ($conflictingBookings as $conflict) {
+                            if ($conflict->tables->contains('id', $table->id)) {
+                                $otherTime = \Carbon\Carbon::parse($conflict->booking_date->format('Y-m-d').' '.$conflict->booking_time);
+                                $diffInMinutes = $otherTime->diffInMinutes($bookingDateTime, false);
 
-                            if ($bookingDateTime->gt($otherTime)) {
-                                $validation['errors'][] = "Meja {$table->table_number} masih digunakan oleh pelanggan lain pada jam ".$otherTime->format('H:i').".";
-                                $validation['can_checkout'] = false;
-                            } else {
-                                $absDiff = abs($diffInMinutes);
-                                if ($absDiff <= 30) {
-                                    $validation['errors'][] = "Waktu reservasi di meja {$table->table_number} terlalu berdekatan dengan pelanggan lain (jam ".$otherTime->format('H:i').").";
+                                if ($bookingDateTime->gt($otherTime)) {
+                                    $validation['errors'][] = "Meja {$table->table_number} masih ada booking jam ".$otherTime->format('H:i').'.';
                                     $validation['can_checkout'] = false;
+                                } else {
+                                    $absDiff = abs($diffInMinutes);
+                                    if ($absDiff <= 30) {
+                                        $validation['errors'][] = "Meja {$table->table_number} terlalu mepet dengan booking lain (jam ".$otherTime->format('H:i').').';
+                                        $validation['can_checkout'] = false;
+                                    } else {
+                                        $validation['warnings'][] = "Peringatan: Meja {$table->table_number} sudah di-reserve orang lain jam ".$otherTime->format('H:i').'.';
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            } else {
+                // OPSIONAL: Jika belum ada meja, Anda bisa set can_checkout = false 
+                // agar user tidak bisa bayar sebelum pilih meja, tapi tanpa menampilkan error "waktu terlewat"
+                $validation['can_checkout'] = false; 
+                $validation['warnings'][] = 'Silakan pilih meja dan waktu reservasi terlebih dahulu.';
             }
         }
-    }
 
-    // ... sisa return Inertia sama seperti sebelumnya
-}
+        return Inertia::render('carts', [
+            'booking' => $booking ? [
+                'id' => $booking->id,
+                'booking_code' => $booking->booking_code,
+                'total_people' => $booking->total_people,
+
+                // UBAH BARIS INI: Tambahkan format('Y-m-d')
+                'booking_date' => $booking->booking_date->format('Y-m-d'),
+
+                'booking_time' => $booking->booking_time,
+                'user' => $booking->user,
+                'tables' => $booking->tables,
+                // Di dalam CartsController.php fungsi showCart()
+                'menus' => $booking->items->map(function ($item) {
+                    // Pastikan relasi menu ditarik dengan withTrashed() di query utamanya
+                    return [
+                        'id' => $item->id,
+                        'menu_id' => $item->menu_id,
+                        'name' => $item->menu->name ?? 'Menu tidak ditemukan', // Nama asli akan muncul
+                        'price' => (int) $item->unit_price,
+                        'qty' => $item->quantity,
+                        // Flag untuk mengecek apakah menu masih aktif atau sudah di-soft delete
+                        'is_available' => $item->menu && ! $item->menu->trashed(),
+                    ];
+                }),
+                'validation' => $validation,
+            ] : null,
+        ]);
+
+    }
 
     public function updateQty(Request $request, $id)
     {
